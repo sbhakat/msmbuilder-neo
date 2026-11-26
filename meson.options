@@ -1,2 +1,0 @@
-option('openmp', type: 'feature', value: 'auto',
-       description: 'Build the parallel kernels with OpenMP')

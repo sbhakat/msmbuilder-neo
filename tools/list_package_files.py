@@ -9,7 +9,7 @@ import sys
 
 SKIP_SUFFIXES = (".pyx", ".pxd", ".pxi", ".c", ".cc", ".cpp", ".h", ".hpp",
                  ".so", ".pyd", ".pyc", ".o")
-SKIP_NAMES = {".gitignore", ".DS_Store", "version.py"}
+SKIP_NAMES = {".gitignore", ".DS_Store", "version.py", "version.py.in"}
 
 root = sys.argv[1]
 for dirpath, dirnames, filenames in os.walk(os.path.join(root, "msmbuilder")):

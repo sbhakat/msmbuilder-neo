@@ -1,18 +1,22 @@
+"""Sparse generalized eigenvalue problem used by SparseTICA.
 
-from libc.math cimport sqrt, fabs, log
+Numba port of the former _speigh.pyx. The ADMM solver and the projection
+step run as Numba kernels; the remaining linear algebra is NumPy/SciPy, in the
+same order as before.
+"""
+import math
 
 import numpy as np
 import scipy.linalg
 import scipy.special
+from numba import njit
 
-include "cy_blas.pyx"
-
-cdef double SPEIGH_TAU_MIN = 0.1
-cdef double ADMM_RHO_INITIAL = 16
-cdef double ADMM_PENALTY_MU_FACTOR = 10
-cdef double ADMM_PENALTY_TAU_FACTOR = 2
-cdef double ADMM_PENALTY_RHO_MAX = 2**10
-cdef double ADMM_PENALTY_RHO_MIN = 2**-10
+SPEIGH_TAU_MIN = 0.1
+ADMM_RHO_INITIAL = 16.0
+ADMM_PENALTY_MU_FACTOR = 10.0
+ADMM_PENALTY_TAU_FACTOR = 2.0
+ADMM_PENALTY_RHO_MAX = 2.0**10
+ADMM_PENALTY_RHO_MIN = 2.0**-10
 
 
 def scdeflate(A, x):
@@ -43,9 +47,8 @@ def scdeflate(A, x):
     return A - np.outer(np.dot(A, x), np.dot(x, A)) / np.dot(np.dot(x, A), x)
 
 
-def speigh(double[:, ::1] A, double[:, ::1] B, double rho, double eps=1e-6,
-           double tol=1e-8, int maxiter=100, int verbose=False, int method=1):
-    """Find a sparse approximate generalized eigenpair.
+def speigh(A, B, rho, eps=1e-6, tol=1e-8, maxiter=100, verbose=False, method=1):
+    r"""Find a sparse approximate generalized eigenpair.
 
     The generalized eigenvalue equation, :math:`Av = lambda Bv`,
     can be expressed as a variational optimization ::
@@ -101,7 +104,11 @@ def speigh(double[:, ::1] A, double[:, ::1] B, double rho, double eps=1e-6,
         eigenvalue problem." Machine learning 85.1-2 (2011): 3-39.
     ... [2] McGibbon, R. T. and V. S. Pande, in preparation (2015)
     """
-    cdef int N = len(A)
+    A = np.ascontiguousarray(A, dtype=np.float64)
+    B = np.ascontiguousarray(B, dtype=np.float64)
+    rho, eps, tol = float(rho), float(eps), float(tol)
+    maxiter, method = int(maxiter), int(method)
+    N = len(A)
     if A.shape[0] != A.shape[1]:
         raise ValueError('A must be a square matrix')
     if B.shape[0] != B.shape[1]:
@@ -110,54 +117,31 @@ def speigh(double[:, ::1] A, double[:, ::1] B, double rho, double eps=1e-6,
         raise ValueError('Wrong B dimensions (%d, %d) should be (%d, %d)' % (
             B.shape[0], B.shape[1], A.shape[0], A.shape[1]))
 
-    cdef int i              # iteration counter
-    cdef int j
-    cdef double f, old_f    # current and old objective function
-    cdef double[::1] x      # solution vector to be iterated
-    cdef double rho_e = rho / scipy.special.log1p(1/eps)
-    cdef double tau = SPEIGH_TAU_MIN + max(0, -np.min(scipy.linalg.eigvalsh(A)))
+    rho_e = rho / scipy.special.log1p(1/eps)
+    tau = SPEIGH_TAU_MIN + max(0, -np.min(scipy.linalg.eigvalsh(A)))
     f, old_f = np.inf, np.inf
 
-    cdef double[::1] Ax = np.empty(N)        # Matrix vector product: dot(A, x)
-    cdef double[::1] w = np.empty(N)
-    cdef double[::1] b = np.empty(N)
-    # Initialize solver from dominant generalized eigenvector (unregularized
-    # solution)
-    x = scipy.linalg.eigh(A, B, subset_by_index=[N-1, N-1])[1][:,0]
-
-    cdef double[::1] B_eigvals
-    cdef double[:, ::1] B_eigvecs
+    x = np.ascontiguousarray(scipy.linalg.eigh(A, B, subset_by_index=[N-1, N-1])[1][:, 0])
     if method == 1:
         B_eigvals, B_eigvecs = map(np.ascontiguousarray, scipy.linalg.eigh(B))
 
     for i in range(maxiter):
         old_f = f
-        cdgemv_N(A, x, Ax)   # Ax = dot(A, x)
-
-        cddot(Ax, x, &f)     # f = Ax.dot(x) - rho_e*sum_i(log(|x_i| + eps))
-        for j in range(N):
-            f -= rho_e * log(fabs(x[j]) + eps)
-
+        Ax = np.dot(A, x)
+        f = _objective(Ax, x, rho_e, eps)
         if verbose:
             print("QCQP objective=%.5f" % f)
         if abs(old_f - f) < tol:
             break
-
-        # b = np.dot(A, x)/tau + x
-        for j in range(N):
-            b[j] = Ax[j]/tau + x[j]
-
-        # w = rho_e / (2 * tau * (|x| + eps))
-        for j in range(N):
-            w[j] = rho_e / (2*tau*(fabs(x[j]) + eps))
-
+        b = Ax / tau + x
+        w = rho_e / (2 * tau * (np.abs(x) + eps))
         if method == 1:
-            f2 = solve_admm(b, w, B_eigvals, B_eigvecs, x, tol=tol, maxiter=maxiter, verbose=verbose)
+            f2 = solve_admm(b, w, B_eigvals, B_eigvecs, x, tol=tol, maxiter=maxiter,
+                            verbose=verbose)
         elif method == 2:
             x, f2 = solve_cvxpy(b, w, B)
         else:
             raise ValueError('Unknown method')
-
         if verbose:
             print("ADMM objective=%.5f" % f2)
 
@@ -165,33 +149,34 @@ def speigh(double[:, ::1] A, double[:, ::1] B, double rho, double eps=1e-6,
         print('Optimized vector (before renormalization)')
         print(np.asarray(x))
 
-    # Proposition 1 and the "variational renormalization" described in [1].
-    # Use the sparsity pattern in 'x', but ignore the loadings and rerun an
-    # unconstrained GEV problem on the submatrices determined by the nonzero
-    # entries in our optimized x
     mask = (np.abs(x) > 0)
     grid = np.ix_(mask, mask)
-    Ak, Bk = np.asarray(A)[grid], np.asarray(B)[grid]  # form the submatrices
-
+    Ak, Bk = A[grid], B[grid]  # form the submatrices
     if len(Ak) == 0:
         u, v = 0, np.zeros(N)
     elif len(Ak) == 1:
         v = np.zeros(N)
-        v[mask] = 1.0 / np.sqrt(Bk[0,0])
-        u = Ak[0,0] / Bk[0,0]
+        v[mask] = 1.0 / np.sqrt(Bk[0, 0])
+        u = Ak[0, 0] / Bk[0, 0]
     else:
         gevals, gevecs = scipy.linalg.eigh(
             Ak, Bk, subset_by_index=[Ak.shape[0]-1, Ak.shape[0]-1])
-        # Usually slower to use sparse linear algebra here
-        # gevals, gevecs = scipy.sparse.linalg.eigsh(
-        #     A=Ak, M=Bk, k=1, v0=x[mask], which='LA')
         u = gevals[0]
         v = np.zeros(N)
         v[mask] = gevecs[:, 0]
         v *= np.sign(np.sum(v))
-        v[v==-0] = 0
-
+        v[v == -0] = 0
     return u, v
+
+
+@njit(cache=True, nogil=True)
+def _objective(Ax, x, rho_e, eps):
+    f = 0.0
+    for j in range(x.shape[0]):
+        f += Ax[j] * x[j]
+    for j in range(x.shape[0]):
+        f -= rho_e * math.log(abs(x[j]) + eps)
+    return f
 
 
 def solve_cvxpy(b, w, B):
@@ -236,10 +221,8 @@ def solve_cvxpy(b, w, B):
     return x, fun
 
 
-cpdef double solve_admm(const double[::1] b, const double[::1] w,
-                        const double[::1] B_eigvals,
-                        const double[:, ::1] B_eigvecs, double[::1] x,
-                        double tol=1e-6, int maxiter=100, int verbose=0):
+
+def solve_admm(b, w, B_eigvals, B_eigvecs, x, tol=1e-6, maxiter=100, verbose=0):
     """Solve a particular convex optimization problem with ADMM
 
     Minimize    1/2 ||x-b||^2 + ||D(w)x||_1
@@ -255,91 +238,133 @@ cpdef double solve_admm(const double[::1] b, const double[::1] w,
     tol : float, default=1e-6
     maxiter : int, default=100
     """
-
-    cdef int i, j
-    cdef int N = len(b)
-
-    if not (len(b) == len(w) == len(x) == len(B_eigvals) == B_eigvecs.shape[0] == B_eigvecs.shape[1]):
+    b = np.ascontiguousarray(b, dtype=np.float64)
+    w = np.ascontiguousarray(w, dtype=np.float64)
+    B_eigvals = np.ascontiguousarray(B_eigvals, dtype=np.float64)
+    B_eigvecs = np.ascontiguousarray(B_eigvecs, dtype=np.float64)
+    N = len(b)
+    if not (len(b) == len(w) == len(x) == len(B_eigvals) == B_eigvecs.shape[0]
+            == B_eigvecs.shape[1]):
         raise ValueError('Incompatible matrix dimensions')
-
-    cdef double rho = ADMM_RHO_INITIAL
-    cdef double[::1] z = np.copy(x)
-    cdef double[::1] z_old = np.copy(x)
-    cdef double[::1] u = np.zeros(N)
-
-    # temps
-    cdef double r_norm2, s_norm2
-    cdef double[::1] absw = np.abs(w)
-    cdef double[::1] v = np.empty(N)
-    cdef double[::1] b_rho_zu = np.empty(N)
-    cdef double[::1] r = np.empty(N)
-    cdef double[::1] s = np.empty(N)
-
-    for i in range(maxiter):
-        z_old[:] = z[:]
-
-        for j in range(N):
-            b_rho_zu[j] = b[j] + rho*(z[j] - u[j])
-
-        soft_thresh(absw, b_rho_zu, x)
-        for j in range(N):
-            x[j] = x[j] / (rho+1.0)
-
-        for j in range(N):
-            v[j] = x[j] + u[j]
-
-        project(v, B_eigvals, B_eigvecs, z)
-
-        for j in range(N):
-            r[j] = x[j] - z[j]               # primal residual
-            s[j] = rho * (z[j] - z_old[j])   # dual residual
-            u[j] = u[j] + r[j]
-
-        # primal residual: r_norm2 = ||r||^2
-        cddot(r, r, &r_norm2)
-        cddot(s, s, &s_norm2)
-
-        if verbose > 1:
-            print(' rho', rho, ' residuals ', sqrt(r_norm2), sqrt(s_norm2))
-
-        if r_norm2 < N*tol*tol and s_norm2 < N*tol*tol:
-            break
-
-        # Varying the penalty parameter, eq. (3.13)
-        if r_norm2 > ADMM_PENALTY_MU_FACTOR**2 * s_norm2 and rho < ADMM_PENALTY_RHO_MAX:
-            rho *= ADMM_PENALTY_TAU_FACTOR
-            for j in range(N):
-                u[j] /= ADMM_PENALTY_TAU_FACTOR
-        if s_norm2 > ADMM_PENALTY_MU_FACTOR**2 * r_norm2 and rho > ADMM_PENALTY_RHO_MIN:
-            rho /= ADMM_PENALTY_TAU_FACTOR
-            for j in range(N):
-                u[j] *= ADMM_PENALTY_TAU_FACTOR
-
-    return 0.5*np.dot(x,x) - np.dot(x,b) + 0.5*np.dot(b,b) + np.sum(np.abs(np.multiply(w, x)))
+    if verbose > 1:
+        # keep the per-iteration residual printout available in pure Python
+        return _solve_admm_verbose(b, w, B_eigvals, B_eigvecs, x, tol, maxiter)
+    _admm(b, w, B_eigvals, B_eigvecs, x, float(tol), int(maxiter))
+    return 0.5*np.dot(x, x) - np.dot(x, b) + 0.5*np.dot(b, b) + np.sum(np.abs(np.multiply(w, x)))
 
 
-###############################################################################
-## Utilities
-###############################################################################
-
-cdef soft_thresh(const double[::1] k, const double[::1] a, double[::1] out):
-    cdef int i
-    cdef int N = len(k)
-    if len(a) != len(k):
-        raise ValueError('Incompatible matrix dimensions')
-
-    for i in range(N):
+@njit(cache=True, nogil=True)
+def _soft_thresh(k, a, out):
+    for i in range(k.shape[0]):
         if a[i] > k[i]:
             out[i] = a[i] - k[i]
         elif a[i] < -k[i]:
             out[i] = a[i] + k[i]
         else:
-            out[i] = 0
+            out[i] = 0.0
 
 
+@njit(cache=True, nogil=True)
+def _project(a, w, V, out):
+    N = a.shape[0]
+    c = np.dot(np.ascontiguousarray(V.T), a)   # c = V.T.dot(a)
+    c2w = np.empty(N)
+    c2w_sum = 0.0
+    for j in range(N):
+        c2w[j] = c[j] * c[j] * w[j]
+        c2w_sum += c2w[j]
+    if c2w_sum < 1:
+        for j in range(N):
+            out[j] = a[j]
+        return
+    mu = 0.0
+    for _ in range(100):
+        G = -1.0
+        Gp = 0.0
+        for j in range(N):
+            muw1 = mu * w[j] + 1
+            G += c2w[j] / (muw1 * muw1)
+            Gp -= 2 * c2w[j] * w[j] / (muw1 * muw1 * muw1)
+        delta = -G / Gp
+        mu = mu + delta
+        if abs(delta) < 1e-12:
+            break
+    for j in range(N):
+        c2w[j] = c[j] / (mu * w[j] + 1)
+    res = np.dot(V, c2w)
+    for j in range(N):
+        out[j] = res[j]
 
-cpdef project(const double[::1] a, const double[::1] w, const double[:, ::1] V,
-              double[::1] out):
+
+@njit(cache=True, nogil=True)
+def _admm_step(b, w, absw, B_eigvals, B_eigvecs, x, z, z_old, u, rho):
+    N = b.shape[0]
+    b_rho_zu = np.empty(N)
+    v = np.empty(N)
+    for j in range(N):
+        z_old[j] = z[j]
+    for j in range(N):
+        b_rho_zu[j] = b[j] + rho * (z[j] - u[j])
+    _soft_thresh(absw, b_rho_zu, x)
+    for j in range(N):
+        x[j] = x[j] / (rho + 1.0)
+    for j in range(N):
+        v[j] = x[j] + u[j]
+    _project(v, B_eigvals, B_eigvecs, z)
+    r_norm2 = 0.0
+    s_norm2 = 0.0
+    for j in range(N):
+        r = x[j] - z[j]               # primal residual
+        s = rho * (z[j] - z_old[j])   # dual residual
+        u[j] = u[j] + r
+        r_norm2 += r * r
+        s_norm2 += s * s
+    return r_norm2, s_norm2
+
+
+@njit(cache=True, nogil=True)
+def _admm_update_rho(rho, r_norm2, s_norm2, u):
+    if r_norm2 > ADMM_PENALTY_MU_FACTOR**2 * s_norm2 and rho < ADMM_PENALTY_RHO_MAX:
+        rho *= ADMM_PENALTY_TAU_FACTOR
+        for j in range(u.shape[0]):
+            u[j] /= ADMM_PENALTY_TAU_FACTOR
+    if s_norm2 > ADMM_PENALTY_MU_FACTOR**2 * r_norm2 and rho > ADMM_PENALTY_RHO_MIN:
+        rho /= ADMM_PENALTY_TAU_FACTOR
+        for j in range(u.shape[0]):
+            u[j] *= ADMM_PENALTY_TAU_FACTOR
+    return rho
+
+
+@njit(cache=True, nogil=True)
+def _admm(b, w, B_eigvals, B_eigvecs, x, tol, maxiter):
+    N = b.shape[0]
+    rho = ADMM_RHO_INITIAL
+    z = x.copy()
+    z_old = x.copy()
+    u = np.zeros(N)
+    absw = np.abs(w)
+    for _ in range(maxiter):
+        r_norm2, s_norm2 = _admm_step(b, w, absw, B_eigvals, B_eigvecs, x, z, z_old, u, rho)
+        if r_norm2 < N * tol * tol and s_norm2 < N * tol * tol:
+            break
+        rho = _admm_update_rho(rho, r_norm2, s_norm2, u)
+
+
+def _solve_admm_verbose(b, w, B_eigvals, B_eigvecs, x, tol, maxiter):
+    N = len(b)
+    rho = ADMM_RHO_INITIAL
+    z, z_old, u = x.copy(), x.copy(), np.zeros(N)
+    absw = np.abs(w)
+    for _ in range(int(maxiter)):
+        r_norm2, s_norm2 = _admm_step(b, w, absw, B_eigvals, B_eigvecs, x, z, z_old, u, rho)
+        print(' rho', rho, ' residuals ', math.sqrt(r_norm2), math.sqrt(s_norm2))
+        if r_norm2 < N * tol * tol and s_norm2 < N * tol * tol:
+            break
+        rho = _admm_update_rho(rho, r_norm2, s_norm2, u)
+    return 0.5*np.dot(x, x) - np.dot(x, b) + 0.5*np.dot(b, b) + np.sum(np.abs(np.multiply(w, x)))
+
+
+def project(a, w, V, out):
     """ Compute the projection of a vector a onto an ellipsoid
 
         Minimize_x ||x-a||^2
@@ -359,39 +384,9 @@ cpdef project(const double[::1] a, const double[::1] w, const double[:, ::1] V,
     out : array, shape=(n,)
         On exit, the results will be written here
     """
-    cdef int i, j
-    cdef int N = len(a)
-    cdef double mu, c2w_sum, G, Gp, muw1, delta
-    cdef double[::1] c = np.empty(N)
-    cdef double[::1] c2w = np.empty(N)
+    a = np.ascontiguousarray(a, dtype=np.float64)
+    w = np.ascontiguousarray(w, dtype=np.float64)
+    V = np.ascontiguousarray(V, dtype=np.float64)
     if not (len(a) == len(w) == V.shape[0] == V.shape[1]):
         raise ValueError('Incompatible matrix dimensions')
-
-    cdgemv_T(V, a, c)   # c = V.T.dot(a)
-
-    c2w_sum = 0
-    for j in range(N):
-        c2w[j] = c[j]*c[j] * w[j]
-        c2w_sum += c2w[j]
-
-    if c2w_sum < 1:
-        out[:] = a[:]
-        return
-
-    mu = 0
-    for i in range(100):
-        G = -1
-        Gp = 0
-        for j in range(N):
-            muw1 = (mu*w[j]+1)
-            G += c2w[j] / (muw1*muw1)
-            Gp -= 2*c2w[j]*w[j] / (muw1*muw1*muw1)
-        delta = -G/Gp
-        mu = mu + delta
-        if fabs(delta) < 1e-12:
-            break
-
-    for j in range(N):
-        c2w[j] = c[j] / (mu*w[j] + 1)
-    cdgemv_N(V, c2w, out)
-    # return out
+    _project(a, w, V, out)

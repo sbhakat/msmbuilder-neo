@@ -1,75 +1,14 @@
 project(
   'msmbuilder-neo',
-  'c', 'cpp', 'cython',
   version: '0.1.0.dev0',
   license: 'LGPL-2.1-or-later',
   meson_version: '>= 1.4.0',
-  default_options: [
-    'buildtype=release',
-    'b_ndebug=if-release',
-    'c_std=c11',
-    'cpp_std=c++14',
-  ],
 )
 
-py = import('python').find_installation(pure: false)
-py_dep = py.dependency()
-np_dep = dependency('numpy')
-
-cc = meson.get_compiler('c')
-cpp = meson.get_compiler('cpp')
-
-# OpenMP is optional: without it the parallel loops run on one thread.
-#
-# On macOS with Apple clang, Meson's OpenMP lookup always picks Homebrew's
-# libomp. Inside a conda environment NumPy, SciPy and scikit-learn already load
-# conda's libomp, and two OpenMP runtimes in one process crash or deadlock.
-# So prefer a libomp that ships with the target Python's prefix when there is
-# one, and fall back to Meson's normal lookup otherwise.
-omp_dep = disabler()
-if not get_option('openmp').disabled() and host_machine.system() == 'darwin' and cc.get_id() == 'clang'
-  py_prefix = py.get_variable('prefix', '')
-  if py_prefix != ''
-    prefix_omp = cc.find_library('omp', dirs: [py_prefix / 'lib'], required: false)
-    if prefix_omp.found() and cc.has_header('omp.h', args: ['-I' + py_prefix / 'include'])
-      omp_dep = declare_dependency(
-        compile_args: ['-Xpreprocessor', '-fopenmp', '-I' + py_prefix / 'include'],
-        dependencies: prefix_omp)
-      message('Using libomp from the Python prefix: ' + py_prefix / 'lib')
-    endif
-  endif
-endif
-if not omp_dep.found()
-  omp_dep = dependency('openmp', language: 'cpp', required: get_option('openmp'))
-endif
-if omp_dep.found()
-  message('OpenMP enabled')
-else
-  message('OpenMP not found; building single-threaded kernels')
-endif
-
-# The vendored Theobald RMSD kernel uses SSE3 on x86 (NEON on ARM).
-simd_args = []
-if host_machine.cpu_family() in ['x86', 'x86_64'] and cpp.get_argument_syntax() == 'gcc'
-  simd_args += ['-mssse3']
-endif
-
-# Quiet warnings from generated Cython code and old C sources.
-quiet_c = cc.get_supported_arguments('-Wno-unused-function', '-Wno-unreachable-code',
-                                     '-Wno-unused-but-set-variable', '-Wno-unused-variable')
-quiet_cpp = cpp.get_supported_arguments('-Wno-unused-function', '-Wno-unreachable-code',
-                                        '-Wno-unused-but-set-variable', '-Wno-unused-variable',
-                                        '-Wno-deprecated-declarations')
-add_project_arguments(quiet_c, language: 'c')
-add_project_arguments(quiet_cpp, language: 'cpp')
-
-# Falling off the end of a non-void function is undefined behaviour; GCC turns
-# it into a trap. That is what crashed k-medoids on Linux, so make it an error.
-add_project_arguments(cc.get_supported_arguments('-Werror=return-type'), language: 'c')
-add_project_arguments(cpp.get_supported_arguments('-Werror=return-type'), language: 'cpp')
-
-cython_args = ['-3', '--fast-fail']
-src_inc = include_directories('msmbuilder/src')
+# MSMBuilder Neo is pure Python: the numerical kernels are compiled at run
+# time by Numba, and RMSD comes from mdtraj. Meson only installs the package
+# files and writes version.py, so wheels are platform independent.
+py = import('python').find_installation(pure: true)
 
 # --- version.py ---------------------------------------------------------------
 git_rev = run_command('git', 'rev-parse', 'HEAD', check: false)
@@ -96,51 +35,3 @@ foreach f : listing
   endforeach
   py.install_sources(f, subdir: '/'.join(subdir_parts))
 endforeach
-
-# --- compiled extensions --------------------------------------------------------
-py.extension_module('_muller',
-  'msmbuilder/example_datasets/_muller.pyx',
-  cython_args: cython_args,
-  dependencies: [np_dep],
-  install: true, subdir: 'msmbuilder/example_datasets')
-
-
-
-
-py.extension_module('_speigh',
-  'msmbuilder/decomposition/_speigh.pyx',
-  cython_args: cython_args + ['--cplus', '-I', meson.current_source_dir() / 'msmbuilder/src'],
-  override_options: ['cython_language=cpp'],
-  include_directories: src_inc,
-  dependencies: [np_dep, omp_dep],
-  install: true, subdir: 'msmbuilder/decomposition')
-
-py.extension_module('test_cyblas',
-  'msmbuilder/tests/test_cyblas.pyx',
-  cython_args: cython_args + ['-I', meson.current_source_dir() / 'msmbuilder/src'],
-  include_directories: src_inc,
-  dependencies: [np_dep],
-  install: true, subdir: 'msmbuilder/tests')
-
-theobald_inc = include_directories('msmbuilder/libdistance/theobald')
-py.extension_module('libdistance',
-  'msmbuilder/libdistance/libdistance.pyx',
-  'msmbuilder/libdistance/theobald/theobald_rmsd.cpp',
-  'msmbuilder/libdistance/theobald/center.cpp',
-  cython_args: cython_args + ['--cplus'],
-  override_options: ['cython_language=cpp'],
-  cpp_args: simd_args,
-  include_directories: [include_directories('msmbuilder/libdistance/src'), theobald_inc],
-  dependencies: [np_dep],
-  install: true, subdir: 'msmbuilder')
-
-py.extension_module('_kmedoids',
-  'msmbuilder/cluster/_kmedoids.pyx',
-  'msmbuilder/cluster/src/kmedoids.cc',
-  cython_args: cython_args + ['--cplus'],
-  override_options: ['cython_language=cpp'],
-  include_directories: include_directories('msmbuilder/cluster', 'msmbuilder/cluster/src'),
-  dependencies: [np_dep],
-  install: true, subdir: 'msmbuilder/cluster')
-
-# The HMMs (msmbuilder/hmm) are pure Python with Numba kernels; nothing to compile.

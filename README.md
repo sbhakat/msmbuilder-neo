@@ -20,12 +20,12 @@ git clone https://github.com/sbhakat/msmbuilder-neo.git
 python -m pip install ./msmbuilder-neo
 ```
 
-Prebuilt wheels for Linux and macOS are built by CI and will be published to
-PyPI once the first release is cut. Windows is not supported for now.
-
-Building from source needs a C/C++ compiler. OpenMP is used when found and
-skipped otherwise (pass `-Csetup-args=-Dopenmp=disabled` to turn it off). On
-macOS, install it with `brew install libomp`.
+MSMBuilder Neo is pure Python: no compiler is needed to install it. The
+numerical kernels are compiled on first use by [Numba](https://numba.pydata.org)
+(this takes a few seconds once; the result is cached), and RMSD calculations
+use [MDTraj](https://www.mdtraj.org). It is tested on Linux and macOS; Windows
+is not supported for now. A wheel will be published to PyPI once the first
+release is cut.
 
 To run the tests:
 
