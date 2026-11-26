@@ -56,6 +56,19 @@ jobs:
           path: ~/msmbuilder_data
           key: msmbuilder-data-v1
 
+      # cibuildwheel downloads helper tools (e.g. virtualenv.pyz from a
+      # github.com raw link that often returns 503). Cache them, and build
+      # with uv so that download is not needed at all.
+      - name: Cache cibuildwheel downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/cibuildwheel
+            ~/.cache/cibuildwheel
+          key: cibuildwheel-${{ runner.os }}-${{ runner.arch }}-v2.23.3
+
+      - uses: astral-sh/setup-uv@v6
+
       - uses: pypa/cibuildwheel@v2.23.3
 
       - uses: actions/upload-artifact@v4

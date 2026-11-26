@@ -68,6 +68,8 @@ addopts = "--import-mode=importlib"
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-*"
+# uv creates the build environments, so no virtualenv download is needed.
+build-frontend = "build[uv]"
 skip = "*-musllinux_* *-win* *-manylinux_i686"
 # Run the full suite on the oldest and newest Python only; it downloads the
 # example datasets and takes several minutes per wheel.
