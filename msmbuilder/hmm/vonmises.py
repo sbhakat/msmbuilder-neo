@@ -352,9 +352,10 @@ timescales: {timescales}
         return (np.asarray(self._means_, dtype=np.float64), np.asarray(self._kappas_, dtype=np.float64), np.log(scipy.special.i0(np.asarray(self._kappas_, dtype=np.float64))))
 
     def _log_startprob(self):
-        # NOTE: the original C++ fitter received self.startprob where it
-        # expected log probabilities; this preserves that behaviour.
-        return np.asarray(self.startprob, dtype=np.float64)
+        # The C++ fitter used before MSMBuilder Neo was handed startprob
+        # where it expected log(startprob), which shifted every reported
+        # log-likelihood by n_trajectories * (1/n_states + log(n_states)).
+        return np.log(np.asarray(self.startprob, dtype=np.float64))
 
     def _fit_em(self, sequences):
         """Expectation-maximization with the current parameters as the

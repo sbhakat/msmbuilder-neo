@@ -7,7 +7,12 @@ the new one to compare:
     python benchmarks/hmm_parity.py --compare ref.npz
 
 Each array must match the reference to within rtol (default 1e-8) times
-the largest magnitude in that array. The old C++
+the largest magnitude in that array.
+
+A reference recorded from msmbuilder2022 (the C++ fitters) will differ in
+score, fit_logprob and viterbi_logprob by n_trajectories * (log(1/n_states)
+- 1/n_states): the old fitter used start probabilities where it expected log
+probabilities. MSMBuilder Neo fixed that; parameters and paths are unaffected. The old C++
 fitter summed trajectories in OpenMP thread order, so exact bit-for-bit
 equality is not expected.
 """
