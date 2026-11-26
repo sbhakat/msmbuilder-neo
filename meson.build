@@ -27,7 +27,6 @@ cpp = meson.get_compiler('cpp')
 # So prefer a libomp that ships with the target Python's prefix when there is
 # one, and fall back to Meson's normal lookup otherwise.
 omp_dep = disabler()
-omp_c_dep = disabler()
 if not get_option('openmp').disabled() and host_machine.system() == 'darwin' and cc.get_id() == 'clang'
   py_prefix = py.get_variable('prefix', '')
   if py_prefix != ''
@@ -36,14 +35,12 @@ if not get_option('openmp').disabled() and host_machine.system() == 'darwin' and
       omp_dep = declare_dependency(
         compile_args: ['-Xpreprocessor', '-fopenmp', '-I' + py_prefix / 'include'],
         dependencies: prefix_omp)
-      omp_c_dep = omp_dep
       message('Using libomp from the Python prefix: ' + py_prefix / 'lib')
     endif
   endif
 endif
 if not omp_dep.found()
   omp_dep = dependency('openmp', language: 'cpp', required: get_option('openmp'))
-  omp_c_dep = dependency('openmp', language: 'c', required: get_option('openmp'))
 endif
 if omp_dep.found()
   message('OpenMP enabled')
@@ -107,29 +104,8 @@ py.extension_module('_muller',
   dependencies: [np_dep],
   install: true, subdir: 'msmbuilder/example_datasets')
 
-py.extension_module('_markovstatemodel',
-  'msmbuilder/msm/_markovstatemodel.pyx',
-  'msmbuilder/msm/src/transmat_mle_prinz.c',
-  cython_args: cython_args,
-  include_directories: include_directories('msmbuilder/msm/src'),
-  dependencies: [np_dep],
-  install: true, subdir: 'msmbuilder/msm')
 
-py.extension_module('_metzner_mcmc_fast',
-  'msmbuilder/msm/_metzner_mcmc_fast.pyx',
-  'msmbuilder/msm/src/metzner_mcmc.c',
-  cython_args: cython_args,
-  include_directories: include_directories('msmbuilder/msm/src'),
-  dependencies: [np_dep, omp_c_dep],
-  install: true, subdir: 'msmbuilder/msm')
 
-py.extension_module('_ratematrix',
-  'msmbuilder/msm/_ratematrix.pyx',
-  cython_args: cython_args + ['--cplus', '-I', meson.current_source_dir() / 'msmbuilder/src'],
-  override_options: ['cython_language=cpp'],
-  include_directories: src_inc,
-  dependencies: [np_dep, omp_dep],
-  install: true, subdir: 'msmbuilder/msm')
 
 py.extension_module('_speigh',
   'msmbuilder/decomposition/_speigh.pyx',
