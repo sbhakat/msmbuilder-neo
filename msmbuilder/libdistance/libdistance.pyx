@@ -475,7 +475,7 @@ cdef _pdist_rmsd(X, npy_intp[::1] X_indices=None):
     X_trace = X._rmsd_traces
 
     if X_indices is None:
-        out = np.zeros(X_xyz.shape[0] * (X_xyz.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X_xyz.shape[0] * (X_xyz.shape[0] - 1) // 2, dtype=np.double)
 
         k = 0
         for i in range(X_xyz.shape[0]):
@@ -485,7 +485,7 @@ cdef _pdist_rmsd(X, npy_intp[::1] X_indices=None):
                 out[k] = rmsd
                 k += 1
     else:
-        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) // 2, dtype=np.double)
 
         k = 0
         for i in range(X_indices.shape[0]):
@@ -502,10 +502,10 @@ cdef _pdist_rmsd(X, npy_intp[::1] X_indices=None):
 cdef _pdist_double(double[:, ::1] X, const char* metric, npy_intp[::1] X_indices=None):
     cdef double[::1] out
     if X_indices is None:
-        out = np.zeros(X.shape[0] * (X.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X.shape[0] * (X.shape[0] - 1) // 2, dtype=np.double)
         pdist_double(&X[0,0], metric, X.shape[0], X.shape[1], &out[0])
     else:
-        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) // 2, dtype=np.double)
         pdist_double_X_indices(&X[0, 0], metric, X.shape[0], X.shape[1],
             &X_indices[0], X_indices.shape[0], &out[0])
 
@@ -515,10 +515,10 @@ cdef _pdist_double(double[:, ::1] X, const char* metric, npy_intp[::1] X_indices
 cdef _pdist_float(float[:, ::1] X, const char* metric, npy_intp[::1] X_indices=None):
     cdef double[::1] out
     if X_indices is None:
-        out = np.zeros(X.shape[0] * (X.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X.shape[0] * (X.shape[0] - 1) // 2, dtype=np.double)
         pdist_float(&X[0,0], metric, X.shape[0], X.shape[1], &out[0])
     else:
-        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) / 2, dtype=np.double)
+        out = np.zeros(X_indices.shape[0] * (X_indices.shape[0] - 1) // 2, dtype=np.double)
         pdist_float_X_indices(&X[0, 0], metric, X.shape[0], X.shape[1],
             &X_indices[0], X_indices.shape[0], &out[0])
     return np.array(out, copy=False)

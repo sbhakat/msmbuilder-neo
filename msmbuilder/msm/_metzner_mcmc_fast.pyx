@@ -99,7 +99,7 @@ def metzner_mcmc_fast(Z, int n_samples, int n_thin=1, int n_chains=1,
     threadK = np.repeat(np.array(K).reshape(1, n_states, n_states),
                         n_chains, axis=0)
 
-    for i in range(n_samples / n_thin):
+    for i in range(n_samples // n_thin):
         rand = random.rand(n_chains, 4 * n_thin)
 
         with nogil:

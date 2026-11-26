@@ -140,9 +140,9 @@ class CheckCommandListed(object):
 @pytest.mark.skipif(True,reason="takes a long time")
 def test_all_help_works():
     for modname, feat in get_all():
-        yield CheckCommandHelpWorks(modname, feat)
+        CheckCommandHelpWorks(modname, feat)()
 
 
 def test_all_listed():
     for modname, feat in get_all():
-        yield CheckCommandListed(modname, feat)
+        CheckCommandListed(modname, feat)()

@@ -5,7 +5,7 @@ offset of 1. The semantics match ``numpy.triu_indices(n, k=1)``
 from numpy cimport npy_intp
 
 
-cdef inline npy_intp ij_to_k(npy_intp i, npy_intp j, npy_intp n) nogil:
+cdef inline npy_intp ij_to_k(npy_intp i, npy_intp j, npy_intp n) noexcept nogil:
     """2D (i, j) square matrix index to linearized upper triangular index
 
     [ 0  a0  a1  a2  a3 ]    (i=0,j=1) -> 0
@@ -35,11 +35,11 @@ cdef inline npy_intp ij_to_k(npy_intp i, npy_intp j, npy_intp n) nogil:
     k_to_ij : the inverse operation
     """
     if j > i:
-        return (n*(n-1)/2) - (n-i)*((n-i)-1)/2 + j - i - 1
-    return (n*(n-1)/2) - (n-j)*((n-j)-1)/2 + i - j - 1
+        return (n*(n-1)//2) - (n-i)*((n-i)-1)//2 + j - i - 1
+    return (n*(n-1)//2) - (n-j)*((n-j)-1)//2 + i - j - 1
 
 
-cdef inline void k_to_ij(npy_intp k, npy_intp n, npy_intp *i, npy_intp *j) nogil:
+cdef inline void k_to_ij(npy_intp k, npy_intp n, npy_intp *i, npy_intp *j) noexcept nogil:
     """Linearized upper triangular index to 2D (i, j) index
 
     [ 0  a0  a1  a2  a3 ]      0 -> (i=0,j=1)
@@ -64,4 +64,4 @@ cdef inline void k_to_ij(npy_intp k, npy_intp n, npy_intp *i, npy_intp *j) nogil
     """
 
     i[0] = n - 2 - <int>(sqrt(-8.0*k + 4.0*n*(n-1)-7.0)/2.0 - 0.5)
-    j[0] = k + i[0] + 1 - n*(n-1)/2 + (n-i[0])*(n-i[0]-1)/2
+    j[0] = k + i[0] + 1 - n*(n-1)//2 + (n-i[0])*(n-i[0]-1)//2

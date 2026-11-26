@@ -31,7 +31,7 @@ from libc.math cimport sqrt, log, exp
 from libc.string cimport memset, strcmp
 
 include "cy_blas.pyx"
-include "config.pxi"
+cdef bint DEBUG = False  # set True to enable internal consistency checks
 include "triu_utils.pyx"      # ij_to_k() and k_to_ij()
 include "_ratematrix_support.pyx"
 include "_ratematrix_priors.pyx"
@@ -58,7 +58,7 @@ cpdef int build_ratemat(const double[::1] theta, npy_intp n, double[:, ::1] out,
         On exit, out contains the matrix K or S
     """
     cdef npy_intp u = 0, k = 0, i = 0, j = 0
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef double s_ij, K_ij, K_ji
     cdef double[::1] pi
     cdef int buildS = strcmp(which, 'S') == 0
@@ -77,7 +77,7 @@ cpdef int build_ratemat(const double[::1] theta, npy_intp n, double[:, ::1] out,
         s_ij = theta[u]
 
         if DEBUG:
-            assert 0 <= u < n*(n-1)/2
+            assert 0 <= u < n*(n-1)//2
 
         K_ij = s_ij * sqrt(pi[j] / pi[i])
         K_ji = s_ij * sqrt(pi[i] / pi[j])
@@ -99,7 +99,7 @@ cpdef int build_ratemat(const double[::1] theta, npy_intp n, double[:, ::1] out,
 
 
 cpdef double dK_dtheta_ij(const double[::1] theta, npy_intp n, npy_intp u,
-                          double[:, ::1] A=None, double[:, ::1] out=None) nogil:
+                          double[:, ::1] A=None, double[:, ::1] out=None) noexcept nogil:
     r"""dK_dtheta_ij(theta, n, u, A=None, out=None)
 
     Compute :math:`dK_ij / dtheta_u` over all `i`, `j` for fixed `u`.
@@ -137,7 +137,7 @@ cpdef double dK_dtheta_ij(const double[::1] theta, npy_intp n, npy_intp u,
     s : double
         The sum of the element-wise product of dK/du and A, if A is not None.
     """
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp a, i, j
     cdef double dK_i, s_ij, dK_ij, dK_ji, pi_i, pi_j
     cdef double sum_elem_product = 0
@@ -217,7 +217,7 @@ cpdef double dK_dtheta_ij(const double[::1] theta, npy_intp n, npy_intp u,
 
 cpdef int dK_dtheta_u(const double[::1] theta, npy_intp n, npy_intp i,
                       npy_intp j, double[:] out, const double[:, :] A=None,
-                      double[:] out2=None) nogil:
+                      double[:] out2=None) noexcept nogil:
     r"""
     Compute :math:`dK_ij / dtheta_u` over all `u` for fixed (`i`, `j`).
 
@@ -251,7 +251,7 @@ cpdef int dK_dtheta_u(const double[::1] theta, npy_intp n, npy_intp i,
         is written, ``out2 = np.dot(out, A)``.
 
     """
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp u, jj, size
     cdef double dK_i, dK_ij, dK_ji, pi_i, pi_j, pi_jj, val, sqrt_pi_j_over_i
     cdef double s_ij = 0
@@ -317,7 +317,7 @@ def loglikelihood(const double[::1] theta, const double[:, ::1] counts, double t
 
     Parameters
     ----------
-    theta : array of shape = (n*(n-1)/2 + n) for dense or shorter
+    theta : array of shape = (n*(n-1)//2 + n) for dense or shorter
         The free parameters of the model. These values are the (possibly sparse)
         linearized elements of the log of the  upper triangular portion of the
         symmetric rate matrix, S, followed by the log of the equilibrium
@@ -331,11 +331,11 @@ def loglikelihood(const double[::1] theta, const double[:, ::1] counts, double t
     -------
     logl : double
         The log likelihood of the parameters.
-    grad : array of shape = (n*(n-1)/2 + n)
+    grad : array of shape = (n*(n-1)//2 + n)
         The gradient of the log-likelihood with respect to `\theta`
     """
     cdef npy_intp n = counts.shape[0]
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     if not (counts.shape[0] == n and counts.shape[1] == n):
         raise ValueError('counts must be n x n')
     if not theta.shape[0] == n_triu + n:
@@ -384,7 +384,7 @@ def hessian(double[::1] theta, double[:, ::1] counts, double t=1, npy_intp[::1] 
 
     Parameters
     ----------
-    theta : array of shape = (n*(n-1)/2 + n) for dense or shorter
+    theta : array of shape = (n*(n-1)//2 + n) for dense or shorter
         The free parameters of the model. These values are the (possibly sparse)
         linearized elements of the log of the  upper triangular portion of the
         symmetric rate matrix, S, followed by the log of the equilibrium
@@ -412,7 +412,7 @@ def hessian(double[::1] theta, double[:, ::1] counts, double t=1, npy_intp[::1] 
         An estimate of the hessian of the log-likelihood
     """
     cdef npy_intp n = counts.shape[0]
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     if not (counts.shape[0] == n and counts.shape[1] == n):
         raise ValueError('counts must be n x n')
     if theta.shape[0] != n_triu + n:
@@ -501,7 +501,7 @@ def sigma_K(const double[:, ::1] covar_theta, const double[::1] theta, npy_intp 
     covar_theta : array, shape=(len(theta), len(theta))
         Covariance matrix of \theta. This is estimated by the inverse hessian
         of the log likelihood function.
-    theta : array of shape = (n*(n-1)/2 + n)
+    theta : array of shape = (n*(n-1)//2 + n)
         The free parameters of the model at the MLE. These values are the
         linearized elements of the upper triangular portion of the symmetric
         rate matrix, S, followed by the log of the equilibrium distribution.
@@ -514,7 +514,7 @@ def sigma_K(const double[:, ::1] covar_theta, const double[::1] theta, npy_intp 
         Estimate of the element-wise asymptotic standard deviation of the
         rate matrix, K.
     """
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp u, v, i, j
     cdef double var_K_ij
     cdef double[::1] temp, dKij
@@ -554,7 +554,7 @@ def sigma_pi(const double[:, :] covar_theta, const double[::1] theta, npy_intp n
     covar_theta : array, shape=(len(theta), len(theta))
         Covariance matrix of \theta. This is estimated by the inverse hessian
         of the log likelihood function.
-    theta : array of shape = (n*(n-1)/2 + n)
+    theta : array of shape = (n*(n-1)//2 + n)
         The free parameters of the model at the MLE. These values are the
         linearized elements of the upper triangular portion of the symmetric
         rate matrix, S, followed by the log of the equilibrium distribution.
@@ -568,7 +568,7 @@ def sigma_pi(const double[:, :] covar_theta, const double[::1] theta, npy_intp n
         distribution, \pi.
     """
     cdef npy_intp i, j
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp size = theta.shape[0]
     if theta.shape[0] != n_triu + n:
         raise ValueError('theta must have shape n*(n+1)/2+n')
@@ -627,7 +627,7 @@ def sigma_eigenvalues(const double[:, ::1] covar_theta, const double[::1] theta,
     covar_theta : array, shape=(len(theta), len(theta))
         Covariance matrix of \theta. This is estimated by the inverse hessian
         of the log likelihood function.
-    theta : array of shape = (n*(n-1)/2 + n)
+    theta : array of shape = (n*(n-1)//2 + n)
         The free parameters of the model at the MLE. These values are the
         linearized elements of the upper triangular portion of the symmetric
         rate matrix, S, followed by the log of the equilibrium distribution.
@@ -640,7 +640,7 @@ def sigma_eigenvalues(const double[:, ::1] covar_theta, const double[::1] theta,
         Estimate of the element-wise asymptotic standard deviation of the
         eigenvalues of the rate matrix (in sorted order).
     """
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp u, v, i
     cdef double var_w_i
     cdef double[::1] pi, sigma_w, temp1, temp2
@@ -696,7 +696,7 @@ def sigma_timescales(const double[:, ::1] covar_theta, const double[::1] theta,
     covar_theta : array, shape=(len(theta), len(theta))
         Covariance matrix of \theta. This is estimated by the inverse hessian
         of the log likelihood function.
-    theta : array of shape = (n*(n-1)/2 + n)
+    theta : array of shape = (n*(n-1)//2 + n)
         The free parameters of the model at the MLE. These values are the
         linearized elements of the upper triangular portion of the symmetric
         rate matrix, S, followed by the log of the equilibrium distribution.
@@ -709,7 +709,7 @@ def sigma_timescales(const double[:, ::1] covar_theta, const double[::1] theta,
         Estimate of the element-wise asymptotic standard deviation of the
         relaxation timescales of the model.
     """
-    cdef npy_intp n_triu = n*(n-1)/2
+    cdef npy_intp n_triu = n*(n-1)//2
     cdef npy_intp u, v, i
     cdef double var_tau_i, d_lambda_i_d_theta_u
     cdef double[::1] pi, w, sigma_tau, dw_u, temp1, temp2

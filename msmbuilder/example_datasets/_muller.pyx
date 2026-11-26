@@ -23,7 +23,7 @@ def propagate(int n_steps=5000, x0=None, int thin=1,
     cdef double DT_SQRT_2D = dt * sqrt(2 * D)
     cdef double beta = 1.0 / kT
     cdef double[:, ::1] r = random.randn(n_steps, 2)
-    cdef double[:, ::1] saved_x = np.zeros(((n_steps)/thin, 2))
+    cdef double[:, ::1] saved_x = np.zeros(((n_steps)//thin, 2))
     cdef double x = x0[0]
     cdef double y = x0[1]
     cdef double[2] grad
@@ -62,7 +62,7 @@ def muller_potential(x, y, beta=1):
     return np.vectorize(wrapper)(x, y, beta)
 
 
-cdef double _muller_potential(double x, double y, double beta=1) nogil:
+cdef double _muller_potential(double x, double y, double beta=1) noexcept nogil:
     cdef npy_intp j
     cdef double value = 0
 
@@ -74,7 +74,7 @@ cdef double _muller_potential(double x, double y, double beta=1) nogil:
     return beta * value
 
 
-cdef void _muller_grad(double x, double y, double beta, double grad[2]) nogil:
+cdef void _muller_grad(double x, double y, double beta, double grad[2]) noexcept nogil:
     cdef int j
     cdef double value = 0
     cdef double term

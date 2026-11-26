@@ -40,6 +40,8 @@ def create_timeseries(means, vars, transmat):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         model = hmmlearn.hmm.GaussianHMM(n_components=len(means),
                                          random_state=rs)
+        # hmmlearn >= 0.3 no longer defaults startprob_; use a uniform start.
+        model.startprob_ = np.full(len(means), 1.0 / len(means))
         model.means_ = means
         model.covars_ = vars
         model.transmat_ = transmat
@@ -107,7 +109,7 @@ def test_2_state():
 
     for init_algo in ('kmeans', 'GMM'):
         for reversible_type in ('mle', 'transpose'):
-            yield two_state_tester(init_algo, reversible_type)
+            two_state_tester(init_algo, reversible_type)()
 
 
 def test_3_state():
@@ -135,7 +137,7 @@ def test_3_state():
 
     for init_algo in ('kmeans', 'GMM'):
         for reversible_type in ('mle', 'transpose'):
-            yield three_state_tester(init_algo, reversible_type)
+            three_state_tester(init_algo, reversible_type)()
 
 
 def test_pipeline():

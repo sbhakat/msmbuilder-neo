@@ -34,6 +34,23 @@ cdef extern from "GaussianHMMFitter.h" namespace "msmbuilder":
         void get_post(double*)
         void get_log_probability(double*)
 
+def _log_normal_density_diag(X, means, covars):
+    """Log density of each row of X under diagonal-covariance Gaussians.
+
+    Returns an array of shape (n_samples, n_components). This is the formula
+    from the removed ``sklearn.mixture.log_multivariate_normal_density`` with
+    ``covariance_type='diag'``.
+    """
+    X = np.asarray(X, dtype=np.float64)
+    means = np.asarray(means, dtype=np.float64)
+    covars = np.asarray(covars, dtype=np.float64)
+    n_dim = X.shape[1]
+    return -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
+                   + np.sum((means ** 2) / covars, 1)
+                   - 2 * np.dot(X, (means / covars).T)
+                   + np.dot(X ** 2, (1.0 / covars).T))
+
+
 cdef public class GaussianHMM[object GaussianHMMObject, type GaussianHMMType]:
     """Reversible Gaussian Hidden Markov Model L1-Fusion Regularization
 
@@ -110,6 +127,15 @@ cdef public class GaussianHMM[object GaussianHMMObject, type GaussianHMMType]:
     cdef stats
     cdef reversible_type, n_lqa_iter, fusion_prior, vars_prior, vars_weight, init_algo
     cdef _means_, _vars_, _transmat_, _populations_, _fit_logprob_, _fit_time_
+    # Lets scikit-learn attach its own bookkeeping attributes (for example
+    # callback context in pipelines); a cdef class has no __dict__ otherwise.
+    cdef dict __dict__
+
+    def __sklearn_is_fitted__(self):
+        # Fitted attributes are Cython fields exposed as properties, which
+        # sklearn's default check (vars(estimator)) cannot see.
+        return self._transmat_ is not None
+
 
     def __init__(self, n_states, n_init=10, n_iter=10,
                  n_lqa_iter=10, fusion_prior=1e-2, thresh=1e-2,
@@ -256,8 +282,8 @@ cdef public class GaussianHMM[object GaussianHMMObject, type GaussianHMMType]:
         GaussianHMM.draw_samples : Draw samples from GHMM
         """
 
-        logprob = [mixture.log_multivariate_normal_density(
-            x, self._means_, self._vars_, covariance_type='diag'
+        logprob = [_log_normal_density_diag(
+            x, self._means_, self._vars_
         ) for x in sequences]
 
         argm = np.array([lp.argmax(0) for lp in logprob])
@@ -328,8 +354,8 @@ cdef public class GaussianHMM[object GaussianHMMObject, type GaussianHMMType]:
 
         if scheme == 'even':
             logprob = [
-                mixture.log_multivariate_normal_density(
-                    x, self._means_, self._vars_, covariance_type='diag'
+                _log_normal_density_diag(
+                    x, self._means_, self._vars_
                 ) for x in sequences]
             ass = [lp.argmax(1) for lp in logprob]
 
@@ -512,10 +538,13 @@ timescales: {timescales}
             small_dataset = np.vstack(sequences[0:min(len(sequences), self.n_hotstart)])
 
         if self.init_algo == "GMM":
-            mix = mixture.GMM(self.n_states, n_init=1, random_state=self.random_state)
+            # sklearn.mixture.GMM was removed; GaussianMixture with diagonal
+            # covariances is its replacement (GMM defaulted to 'diag').
+            mix = mixture.GaussianMixture(self.n_states, covariance_type='diag',
+                                          n_init=1, random_state=self.random_state)
             mix.fit(small_dataset)
             self._means_ = mix.means_
-            self._vars_ = mix.covars_
+            self._vars_ = mix.covariances_
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")

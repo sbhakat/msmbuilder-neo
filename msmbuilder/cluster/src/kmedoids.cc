@@ -44,17 +44,20 @@ static void getclustermedoids(npy_intp nclusters, npy_intp nelements,
                               double* distance, npy_intp clusterid[],
                               npy_intp centroids[], double errors[]);
 
-#if PY_MAJOR_VERSION >= 3
-static int
-#else
-static void
-#endif
-initialize_numpy(void) {
+/* Load the NumPy C API for this translation unit. Returns 0 on success and
+ * -1 with a Python exception set on failure.
+ *
+ * The original version was declared to return int but had no return
+ * statement. Falling off the end of a non-void function is undefined
+ * behaviour in C++; GCC turns it into a trap, which crashed k-medoids on
+ * Linux while clang on macOS happened to tolerate it. */
+static int initialize_numpy(void) {
     static int is_initialized = 0;
     if (is_initialized == 0) {
-        import_array();
+        if (_import_array() < 0) return -1;
         is_initialized = 1;
     }
+    return 0;
 }
 
 static inline npy_intp ix(npy_intp i, npy_intp j, npy_intp n) {
@@ -185,7 +188,12 @@ to 0. If kmedoids fails due to a memory allocation error, ifound is set to -1.
         if (npass != 0) {
             err = randomassign(nclusters, nelements, tclusterid, random);
             if (err < 0) {
+                /* A Python exception is set; release buffers and report it. */
                 *ifound = err;
+                if (npass > 1) free(tclusterid);
+                free(saved);
+                free(centroids);
+                free(errors);
                 return;
             }
         }
@@ -337,16 +345,12 @@ The cluster number to which an element was assigned.
     double p;
     npy_intp n = nelements-nclusters;
     PyObject *binomial = NULL, *shuffle = NULL, *args = NULL, *result = NULL, *arr = NULL;
-    initialize_numpy();
+    if (initialize_numpy() < 0) return -1;
     binomial = PyObject_GetAttrString(random, "binomial");
-    if (binomial == NULL) {
-        PyErr_SetString(PyExc_AttributeError, "binomial");
-        return -1;
-    }
+    if (binomial == NULL) return -1;
     shuffle = PyObject_GetAttrString(random, "shuffle");
     if (shuffle == NULL) {
         Py_DECREF(binomial);
-        PyErr_SetString(PyExc_AttributeError, "shuffle");
         return -1;
     }
 
@@ -357,11 +361,14 @@ The cluster number to which an element was assigned.
     for (i = 0; i < nclusters-1; i++) {
         p = 1.0/(nclusters-i);
         /* j = binomial(n, p); */
-        args = Py_BuildValue("(dd)", static_cast<double>(n), p);
+        args = Py_BuildValue("(Ld)", static_cast<long long>(n), p);
+        if (args == NULL) goto fail;
         result = PyObject_Call(binomial, args, NULL);
-        j = PyLong_AsLong(result);
         Py_DECREF(args);
+        if (result == NULL) goto fail;
+        j = PyLong_AsLong(result);
         Py_DECREF(result);
+        if (j == -1 && PyErr_Occurred()) goto fail;
 
         n -= j;
         j += k+1; /* Assign at least one element to cluster i */
@@ -372,14 +379,20 @@ The cluster number to which an element was assigned.
 
     /* Create a random permutation of the cluster assignments */
     arr = PyArray_SimpleNewFromData(1, &nelements, NPY_INTP, reinterpret_cast<void*>(clusterid));
-    args = Py_BuildValue("(O)", arr);
-    result = PyObject_Call(shuffle, args, NULL);
+    if (arr == NULL) goto fail;
+    result = PyObject_CallOneArg(shuffle, arr);
     Py_DECREF(arr);
-    Py_DECREF(args);
+    if (result == NULL) goto fail;
+    Py_DECREF(result);
 
     Py_DECREF(binomial);
     Py_DECREF(shuffle);
     return 1;
+
+fail:
+    Py_DECREF(binomial);
+    Py_DECREF(shuffle);
+    return -1;
 }
 
 

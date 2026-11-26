@@ -1,12 +1,15 @@
-# this file gets nose to find the tests that appear in the cython module
-from msmbuilder.tests import test_cyblas
+"""Run the BLAS wrapper tests that live in the compiled test_cyblas module."""
+import pytest
+
+from msmbuilder.tests import test_cyblas as cyblas_module
+
+CYBLAS_TESTS = sorted(name for name in dir(cyblas_module) if name.startswith('test'))
 
 
-def test():
-    count = 0
-    for name in dir(test_cyblas):
-        if name.startswith('test'):
-            count += 1
-            yield getattr(test_cyblas, name)
-    if count == 0:
-        assert False
+def test_found_cyblas_tests():
+    assert CYBLAS_TESTS
+
+
+@pytest.mark.parametrize('name', CYBLAS_TESTS)
+def test_cyblas_function(name):
+    getattr(cyblas_module, name)()

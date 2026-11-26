@@ -107,6 +107,15 @@ cdef public class VonMisesHMM[object VonMisesHMMObject, type VonMisesHMMType]:
     cdef stats
     cdef reversible_type
     cdef _means_, _kappas_, _transmat_, _populations_, _fit_logprob_, _fit_time_
+    # Lets scikit-learn attach its own bookkeeping attributes (for example
+    # callback context in pipelines); a cdef class has no __dict__ otherwise.
+    cdef dict __dict__
+
+    def __sklearn_is_fitted__(self):
+        # Fitted attributes are Cython fields exposed as properties, which
+        # sklearn's default check (vars(estimator)) cannot see.
+        return self._transmat_ is not None
+
 
     def __init__(self, n_states, n_init=10, n_iter=10, thresh=1e-2, reversible_type='mle', random_state=None):
         self.n_states = int(n_states)

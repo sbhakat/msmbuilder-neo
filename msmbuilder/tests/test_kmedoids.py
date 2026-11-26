@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, division
 
 import pytest
-pytestmark = pytest.mark.skip(reason='Fatal Python error: Segmentation fault')
 
 import numpy as np
 from msmbuilder.cluster._kmedoids import contigify_ids
