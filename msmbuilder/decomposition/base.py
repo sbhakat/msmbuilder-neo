@@ -3,15 +3,10 @@
 # Copyright (c) 2014, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import collections
 
-try:
-    from collections import Sequence
-except ImportError:
-    # python3.10
-    from collections.abc import Sequence
+from collections.abc import Sequence
 
 from ..base import BaseEstimator
 from ..utils import check_iter_of_sequences
@@ -49,7 +44,7 @@ class MultiSequenceDecompositionMixin(BaseEstimator):
         self
         """
         check_iter_of_sequences(sequences)
-        s = super(MultiSequenceDecompositionMixin, self)
+        s = super()
         s.fit(self._concat(sequences))
 
         return self
@@ -129,4 +124,4 @@ class MultiSequenceDecompositionMixin(BaseEstimator):
         -------
         out : array like, shape (n_samples, n_features)
         """
-        return super(MultiSequenceDecompositionMixin, self).transform(sequence)
+        return super().transform(sequence)

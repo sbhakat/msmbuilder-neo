@@ -17,7 +17,6 @@ and absorbing) check out Chapter 11 in:
 The absorbing Markov Chain information is interesting, but
 note that we are using ergodic Markov Chains.
 """
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import scipy
 import copy

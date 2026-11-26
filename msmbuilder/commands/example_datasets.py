@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 
 from ..cmdline import NumpydocClassCommand
 from ..example_datasets import (AlanineDipeptide, DoubleWell, QuadWell, FsPeptide,

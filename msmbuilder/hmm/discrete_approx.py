@@ -7,10 +7,9 @@
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
-from __future__ import print_function, division, absolute_import
 
 import numpy as np
-import scipy.misc
+from scipy.special import logsumexp
 import scipy.linalg
 import scipy.optimize
 from mdtraj.utils import ensure_type
@@ -59,13 +58,13 @@ def discrete_approx_mvn(X, means, covars, match_variances=True):
     -----
     The discrete distribution is one that has mass only at the specified
     points. It can therefore be parameterized by a set of weights on each
-    point. If :math:`\{X_i\}` is the set of allowable points, and
-    :math:`\{w_i\}` are the weights, then our discrete distribution has
+    point. If :math:`\\{X_i\\}` is the set of allowable points, and
+    :math:`\\{w_i\\}` are the weights, then our discrete distribution has
     the form
 
     .. math::
 
-        p(y; w) = w_i \sum \delta(y - X_i).
+        p(y; w) = w_i \\sum \\delta(y - X_i).
 
     We chose the :math:`w_i` by minimizing the K-L divergence from the our
     discrete distribution to the desired multivariate normal subject to a
@@ -76,14 +75,14 @@ def discrete_approx_mvn(X, means, covars, match_variances=True):
 
     .. math::
 
-        min_{\{w_i\}} \sum_i p(X_i; w) \log \frac{p(X_i; w)}{q(X_i)}
+        min_{\\{w_i\\}} \\sum_i p(X_i; w) \\log \frac{p(X_i; w)}{q(X_i)}
 
     subject to
 
     .. math::
 
-        \sum_i (X_i)       p(X_i; w) = \int_\Omega (x)    q(x) = \mu,
-        \sum_i (X_i-mu)**2 p(X_i; w) = \int_\Omega (x-mu) q(x).
+        \\sum_i (X_i)       p(X_i; w) = \\int_\\Omega (x)    q(x) = \\mu,
+        \\sum_i (X_i-mu)**2 p(X_i; w) = \\int_\\Omega (x-mu) q(x).
 
     References
     ----------
@@ -122,7 +121,7 @@ def discrete_approx_mvn(X, means, covars, match_variances=True):
 
     def objective_and_grad(l):
         dot = np.dot(moment_contributions, l)
-        lse = scipy.misc.logsumexp(dot, b=prob)
+        lse = logsumexp(dot, b=prob)
         # value of the objective function
         obj_value = lse - np.dot(l, moments)
 
@@ -141,7 +140,7 @@ def discrete_approx_mvn(X, means, covars, match_variances=True):
         raise NotSatisfiableError()
 
     dot = np.dot(moment_contributions, result['x'])
-    log_denominator = scipy.misc.logsumexp(dot, b=prob)
+    log_denominator = logsumexp(dot, b=prob)
     weights = prob * np.exp(dot - log_denominator)
     if not np.all(np.isfinite(weights)):
         raise NotSatisfiableError()

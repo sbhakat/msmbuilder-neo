@@ -38,9 +38,9 @@ if __name__ == '__main__':
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
 
 import abc
+from typing import Any
 import argparse
 import copy
 import inspect
@@ -50,7 +50,6 @@ import re
 import sys
 import textwrap
 
-from six import with_metaclass, PY2
 
 from . import version
 
@@ -68,22 +67,7 @@ except ImportError:
     print('-' * 35, file=sys.stderr)
     raise
 
-# Shim py3's inspect.Parameter class
-try:
-    from inspect import Parameter
-except ImportError:
-    class Parameter:
-        POSITIONAL_OR_KEYWORD = 'lalalapositionalorkeyword'
-        empty = 'dodododoempty'
-
-        def __init__(self, name, kind):
-            self.name = name
-            self.kind = kind
-            self.default = self.empty
-
-        def replace(self, default):
-            self.default = default
-            return self
+from inspect import Parameter
 
 # Work around a very odd bug in pytables, where it destroys arguments in
 # sys.argv when imported
@@ -108,7 +92,7 @@ class MultipleIntAction(argparse.Action):
         if isinstance(values, list):
             values = ' '.join(values)
         try:
-            parsed = [int(x) for x in re.findall('[^,;\s]+', values)]
+            parsed = [int(x) for x in re.findall(r'[^,;\s]+', values)]
             setattr(namespace, self.dest, parsed)
         except ValueError:
             raise argparse.ArgumentError(self, 'Invalid list of integers: "%s"' % values)
@@ -130,7 +114,7 @@ class FlagAction(argparse.Action):
             for negative_prefix in negative_prefixes:
                 self.negative_strings.add(negative_prefix + suffix)
         strings = list(self.positive_strings | self.negative_strings)
-        super(FlagAction, self).__init__(option_strings=strings, dest=dest,
+        super().__init__(option_strings=strings, dest=dest,
                                          nargs=0, const=None, default=default, type=bool, choices=None,
                                          required=required, help=help, metavar=metavar)
 
@@ -145,7 +129,7 @@ class FlagAction(argparse.Action):
 #-----------------------------------------------------------------------------
 
 
-class argument(object):
+class argument:
     """Wrapper for parser.add_argument"""
 
     def __init__(self, *args, **kwargs):
@@ -158,7 +142,7 @@ class argument(object):
         root.add_argument(*self.args, **self.kwargs)
 
 
-class argument_group(object):
+class argument_group:
     """Wrapper for parser.add_argument_group"""
 
     def __init__(self, *args, **kwargs):
@@ -199,7 +183,7 @@ class argument_group(object):
             x.register(group)
 
 
-class mutually_exclusive_group(object):
+class mutually_exclusive_group:
     """Wrapper parser.add_mutually_exclusive_group"""
 
     def __init__(self, *args, **kwargs):
@@ -228,7 +212,7 @@ class ClassProperty(property):
         return self.fget.__get__(None, owner)()
 
 
-class Command(with_metaclass(abc.ABCMeta, object)):
+class Command(metaclass=abc.ABCMeta):
     # Set _concrete to true for all final classes in the heirarchy
     _concrete = False
 
@@ -279,7 +263,7 @@ class NumpydocClassCommand(Command):
     """
 
     # subclasses MUST override this
-    klass = None
+    klass: Any = None
 
     # subclasses MAY override this
     example = None
@@ -368,7 +352,7 @@ class NumpydocClassCommand(Command):
                     kwargs['action'] = FlagAction
 
                 else:
-                    if hasattr(cls, '_{}_type'.format(arg)):
+                    if hasattr(cls, f'_{arg}_type'):
                         # If the docstring *contains* the word float or int,
                         # parsing will fail for things not of that type
                         # even if a custom loader will eventually be used.
@@ -382,7 +366,7 @@ class NumpydocClassCommand(Command):
                                 kwargs['type'] = basic_types[basic_type]
                                 break
 
-            group.add_argument('--{}'.format(arg), **kwargs)
+            group.add_argument(f'--{arg}', **kwargs)
 
         group.register(subparser)
 
@@ -420,7 +404,7 @@ class NumpydocClassCommand(Command):
         return '\n'.join(lines)
 
 
-class App(object):
+class App:
     subcommand_dest = 'subcommand'
 
     def __init__(self, name, description, argv=None):
@@ -437,7 +421,7 @@ class App(object):
         cmdnames = []
         for act in self.parser._subparsers._actions:
             if hasattr(act, '_choices_actions'):
-                cmdnames.extend((e.dest for e in act._choices_actions))
+                cmdnames.extend(e.dest for e in act._choices_actions)
             else:
                 cmdnames.extend(act.option_strings)
 
@@ -483,7 +467,7 @@ class App(object):
 
         def _key(klass):
             #return getattr(klass, '_group', klass)
-            return getattr(klass, '_group')
+            return klass._group
 
         for title, group in itertools.groupby(sorted(self._subcommands(), key=_key), key=_key):
             # subparser = subparsers.add_argument_group(name)
@@ -529,13 +513,13 @@ class MyHelpFormatter(argparse.ArgumentDefaultsHelpFormatter,
         # e.g. line 487 in argparse.py, where _action_max_length is used to set the
         # lateral position of the help text. This is really hacky.
         action_max_length = kwargs.pop('action_max_length', 0)
-        super(MyHelpFormatter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._action_max_length = action_max_length
 
     def _get_help_string(self, action):
         help = action.help
         if action.default:
-            return super(MyHelpFormatter, self)._get_help_string(action)
+            return super()._get_help_string(action)
         return help
 
 
@@ -596,7 +580,4 @@ def get_init_argspec(klass):
     """
     if hasattr(klass, '_init_argspec'):
         return _shim_argspec(klass._init_argspec())
-    elif PY2:
-        return _shim_argspec(inspect.getargspec(klass.__init__))
-    else:
-        return inspect.signature(klass.__init__)
+    return inspect.signature(klass.__init__)

@@ -3,7 +3,6 @@
 # Copyright (c) 2016, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import os
 import pickle
@@ -19,7 +18,7 @@ from jinja2 import Environment, PackageLoader
 
 __all__ = ['backup', 'preload_top', 'preload_tops', 'load_meta', 'load_generic',
            'load_trajs', 'save_meta', 'render_meta', 'save_generic',
-           'itertrajs', 'save_trajs', 'ProjectTemplatej']
+           'itertrajs', 'save_trajs']
 
 
 class BackupWarning(UserWarning):
@@ -49,8 +48,8 @@ def backup(fn):
         backnum += 1
         trial_fn = backfmt.format(fn=fn, backnum=backnum)
 
-    warnings.warn("{fn} exists. Moving it to {newfn}"
-                  .format(fn=fn, newfn=trial_fn),
+    warnings.warn(f"{fn} exists. Moving it to {trial_fn}"
+                  ,
                   BackupWarning)
     shutil.move(fn, trial_fn)
 
@@ -81,7 +80,7 @@ def validate_keys(keys, key_to_path_func=None,
     if key_to_path_func is None:
         key_to_path_func = default_key_to_path
 
-    err = "Key must match regular expression {}".format(valid_re)
+    err = f"Key must match regular expression {valid_re}"
     for k in keys:
         ks = key_to_path_func(k)
         assert isinstance(ks, str), "Key must convert to a string"

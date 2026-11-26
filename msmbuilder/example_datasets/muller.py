@@ -1,4 +1,3 @@
-from __future__ import print_function, division, absolute_import
 
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
@@ -56,7 +55,7 @@ class MullerPotential(_NWell):
     surface. The potential is defined in [1]. The dynamics are governed by the
     stochastic differential equation::
 
-        dx_t/dt = -\nabla V(x)/(kT) + \sqrt{2D} * R(t)
+        dx_t/dt = -\nabla V(x)/(kT) + \\sqrt{2D} * R(t)
 
     where R(t) is a standard normal white-noise process, and D=1e-2. The
     dynamics are discretized with an euler integrator with timsetep dt=0.1,
@@ -73,8 +72,8 @@ class MullerPotential(_NWell):
     """
 
     target_name = "muller"
-    version = MULLER_PARAMETERS['VERSION']
-    n_trajectories = MULLER_PARAMETERS['N_TRAJECTORIES']
+    version = int(MULLER_PARAMETERS['VERSION'])
+    n_trajectories = int(MULLER_PARAMETERS['N_TRAJECTORIES'])
 
     def simulate_func(self, random):
         M = MULLER_PARAMETERS

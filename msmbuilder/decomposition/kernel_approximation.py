@@ -3,7 +3,6 @@
 # Copyright (c) 2015, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import absolute_import
 
 import numpy as np
 from scipy.linalg import svd
@@ -86,7 +85,7 @@ class LandmarkNystroem(Nystroem):
                 not isinstance(landmarks, (int, np.ndarray))):
             raise ValueError('landmarks should be an int, ndarray, or None.')
         self.landmarks = landmarks
-        super(LandmarkNystroem, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fit(self, sequences, y=None):
         if self.landmarks is not None:

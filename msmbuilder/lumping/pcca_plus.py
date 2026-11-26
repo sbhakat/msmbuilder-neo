@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import, division
 
 import numpy as np
 from numpy import dot, diag, trace as tr
@@ -93,7 +92,7 @@ class PCCAPlus(PCCA):
     def __init__(self, n_macrostates, do_minimization=True,
                  objective_function='crisp_metastability', **kwargs):
 
-        super(PCCAPlus, self).__init__(n_macrostates, **kwargs)
+        super().__init__(n_macrostates, **kwargs)
         obj_functions = dict(
                 crispness=crispness,
                 metastability=metastability,

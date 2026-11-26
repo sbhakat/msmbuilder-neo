@@ -22,7 +22,6 @@ They are compiled away by default, unless `python setup.py install` is
 run with the flag `--debug` on the command line.
 """
 
-from __future__ import print_function
 import numpy as np
 from numpy import (zeros, allclose, real, ascontiguousarray, asfortranarray)
 import scipy.linalg

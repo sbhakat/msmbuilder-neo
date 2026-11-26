@@ -13,7 +13,6 @@ References
        hub-like behavior in protein folding networks."
        JCTC, 8, 3044-3052 (2012).
 """
-from __future__ import print_function, division, absolute_import
 import numpy as np
 
 from . import committors, conditional_committors

@@ -24,7 +24,6 @@ References
        19011-19016.
 """
 
-from __future__ import absolute_import
 
 from .committor import committors, conditional_committors
 from .flux import fluxes, net_fluxes

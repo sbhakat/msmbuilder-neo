@@ -3,7 +3,7 @@ from sklearn.utils import check_random_state
 
 
 def metzner_mcmc_slow(Z, n_samples, n_thin=1, random_state=None):
-    """Metropolis Markov chain Monte Carlo sampler for reversible transition
+    r"""Metropolis Markov chain Monte Carlo sampler for reversible transition
     matrices
 
     Parameters

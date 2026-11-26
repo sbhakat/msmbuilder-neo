@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import itertools
 import os
@@ -116,10 +115,10 @@ def assert_call(args):
                                stdout=noout) == 0
 
 
-class CheckCommandHelpWorks(object):
+class CheckCommandHelpWorks:
     def __init__(self, modname, command):
         self.command = command
-        self.description = "test_{}.{}_help_works".format(modname, command)
+        self.description = f"test_{modname}.{command}_help_works"
 
     def __call__(self):
         prefix = ['msmb']
@@ -127,13 +126,13 @@ class CheckCommandHelpWorks(object):
         assert_call(prefix + [self.command] + postfix)
 
 
-class CheckCommandListed(object):
+class CheckCommandListed:
     def __init__(self, modname, command):
         self.command = command
-        self.description = "test_{}.{}_listed".format(modname, command)
+        self.description = f"test_{modname}.{command}_listed"
 
     def __call__(self):
-        err = '{} was not listed in `msmb -h`'.format(self.command)
+        err = f'{self.command} was not listed in `msmb -h`'
         assert self.command in HELP_COMMANDS, err
 
 # @skipif(True) # takes a long time

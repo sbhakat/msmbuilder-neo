@@ -1,4 +1,3 @@
-from __future__ import print_function, division, absolute_import
 
 import contextlib
 import pickle
@@ -6,11 +5,7 @@ import warnings
 
 import numpy as np
 
-# sklearn.externals.joblib is removed in scikit-learn v0.23
-try:
-    from joblib import load as jl_load
-except ImportError:
-    from sklearn.externals.joblib import load as jl_load
+from joblib import load as jl_load
 
 __all__ = ['printoptions', 'verbosedump', 'verboseload', 'dump', 'load']
 
@@ -69,10 +64,10 @@ def load(filename):
         try:
             return jl_load(filename)
         except Exception as e2:
-            raise IOError(
-                "Unable to load {} using the pickle or joblib protocol.\n"
-                "Pickle: {}\n"
-                "Joblib: {}".format(filename, e1, e2)
+            raise OSError(
+                f"Unable to load {filename} using the pickle or joblib protocol.\n"
+                f"Pickle: {e1}\n"
+                f"Joblib: {e2}"
             )
 
 

@@ -1,4 +1,3 @@
-from __future__ import print_function, division, absolute_import
 
 import os
 import shlex
@@ -11,7 +10,7 @@ import pytest
 from importlib.resources import files
 
 
-class tempdir(object):
+class tempdir:
     def __enter__(self):
         self._curdir = os.path.abspath(os.curdir)
         self._tempdir = tempfile.mkdtemp()
@@ -47,11 +46,11 @@ def check_call(tokens):
         raise
 
 
-class workflow_tester(object):
+class workflow_tester:
     def __init__(self, fn):
         self.fn = fn
-        self.path = "tests/workflows/{}".format(fn)
-        self.description = "{}.test_{}".format(__name__, fn)
+        self.path = f"tests/workflows/{fn}"
+        self.description = f"{__name__}.test_{fn}"
 
     def __call__(self, *args, **kwargs):
         with tempdir():

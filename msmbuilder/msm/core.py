@@ -3,15 +3,10 @@
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import collections
 
-try:
-    from collections import Iterable
-except ImportError:
-    # python3.10
-    from collections.abc import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import scipy.linalg
@@ -187,7 +182,7 @@ class _MappingTransformMixin(TransformerMixin):
             result.append(f(y))
         return result
 
-class _CountsMSMMixin(object):
+class _CountsMSMMixin:
     def _build_counts(self, sequences, y=None):
         sequences = list_of_1d(sequences)
         # step 1. count the number of transitions
@@ -216,7 +211,7 @@ class _CountsMSMMixin(object):
         self.n_states_ = self.countsmat_.shape[0]
         return
 
-class _SampleMSMMixin(object):
+class _SampleMSMMixin:
     """Provides msm.sample() for drawing samples from continuous and discrete time MSMs."""
 
     def sample_discrete(self, state=None, n_steps=100, random_state=None):
@@ -315,7 +310,7 @@ class _SampleMSMMixin(object):
 
 
 def _solve_ratemat_eigensystem(theta, k, n):
-    """Find the dominant eigenpairs of a reversible rate matrix (master
+    r"""Find the dominant eigenpairs of a reversible rate matrix (master
     equation)
 
     Parameters
@@ -363,7 +358,7 @@ def _solve_ratemat_eigensystem(theta, k, n):
 
 
 def _solve_msm_eigensystem(transmat, k):
-    """Find the dominant eigenpairs of an MSM transition matrix
+    r"""Find the dominant eigenpairs of an MSM transition matrix
 
     Parameters
     ----------

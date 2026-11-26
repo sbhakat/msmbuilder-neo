@@ -1,11 +1,10 @@
-from __future__ import print_function, absolute_import
 import os
 import warnings
 
 import numpy as np
 import mdtraj as md
 
-from ..utils.progressbar import ProgressBar, Percentage, Bar, ETA
+from tqdm import tqdm
 from ..utils import verbosedump
 from ..cmdline import NumpydocClassCommand, argument, exttype, stripquotestype
 from ..dataset import dataset, MDTrajDataset
@@ -55,15 +54,13 @@ class FeaturizerCommand(NumpydocClassCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = "Couldn't find topology file '{}'".format(top)
+            err = f"Couldn't find topology file '{top}'"
             assert os.path.exists(top), err
 
         input_dataset = MDTrajDataset(self.trjs, topology=top, stride=self.stride, verbose=False)
         out_dataset = input_dataset.create_derived(self.transformed, fmt='dir-npy')
 
-        pbar = ProgressBar(widgets=[Percentage(), Bar(), ETA()],
-                           maxval=len(input_dataset)).start()
-        for key in pbar(input_dataset.keys()):
+        for key in tqdm(input_dataset.keys(), total=len(input_dataset), unit='traj'):
             trajectory = []
             for i, chunk in enumerate(input_dataset.iterload(key, chunk=self.chunk)):
                 trajectory.append(self.instance.partial_transform(chunk))
@@ -123,8 +120,8 @@ class RMSDFeaturizerCommand(FeaturizerCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = ("Couldn't find topology file '{}' "
-                   "when loading reference trajectory".format(top))
+            err = (f"Couldn't find topology file '{top}' "
+                   "when loading reference trajectory")
             assert os.path.exists(top), err
         return md.load(fn, top=top)
 
@@ -142,8 +139,8 @@ class LandMarkRMSDFeaturizerCommand(FeaturizerCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = ("Couldn't find topology file '{}' "
-                   "when loading reference trajectory".format(top))
+            err = (f"Couldn't find topology file '{top}' "
+                   "when loading reference trajectory")
             assert os.path.exists(top), err
         return md.load(fn, top=top)
 
@@ -164,8 +161,8 @@ class SuperposeFeaturizerCommand(FeaturizerCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = ("Couldn't find topology file '{}' "
-                   "when loading reference trajectory".format(top))
+            err = (f"Couldn't find topology file '{top}' "
+                   "when loading reference trajectory")
             assert os.path.exists(top), err
         return md.load(fn, top=top)
 
@@ -243,8 +240,8 @@ class RawPositionsFeaturizerCommand(FeaturizerCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = ("Couldn't find topology file '{}' "
-                   "when loading reference trajectory".format(top))
+            err = (f"Couldn't find topology file '{top}' "
+                   "when loading reference trajectory")
             assert os.path.exists(top), err
         return md.load(fn, top=top)
 
@@ -290,8 +287,8 @@ class LigandRMSDFeaturizerCommand(FeaturizerCommand):
             top = None
         else:
             top = os.path.expanduser(self.top)
-            err = ("Couldn't find topology file '{}' "
-                   "when loading reference trajectory".format(top))
+            err = (f"Couldn't find topology file '{top}' "
+                   "when loading reference trajectory")
             assert os.path.exists(top), err
         return md.load(fn, top=top)
 

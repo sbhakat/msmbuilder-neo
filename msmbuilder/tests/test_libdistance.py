@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import mdtraj as md
 import numpy as np
@@ -59,10 +58,10 @@ def test_assign_nearest_double_float_1():
 
             cdist_1 = cdist(X, Y, metric=metric)
             assert cdist_1.shape == (10, 3)
-            f = lambda: np.testing.assert_array_equal(
+            np.testing.assert_array_equal(
                     assignments,
-                    cdist_1.argmin(axis=1))
-            f.description = 'assign_nearest: %s %s' % (metric, X.dtype)
+                    cdist_1.argmin(axis=1),
+                    err_msg='assign_nearest: %s %s' % (metric, X.dtype))
 
             np.testing.assert_almost_equal(
                     inertia,

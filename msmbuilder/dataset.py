@@ -3,7 +3,6 @@
 # Copyright (c) 2015, Stanford University
 # All rights reserved.
 
-from __future__ import absolute_import, print_function, division
 
 import getpass
 import glob
@@ -12,11 +11,7 @@ import re
 import socket
 import sys
 import warnings
-try:
-    from collections import Sequence
-except ImportError:
-    # python3.10
-    from collections.abc import Sequence
+from collections.abc import Sequence
 from datetime import datetime
 from os.path import join, exists, expanduser
 
@@ -308,7 +303,7 @@ class NumpyDirDataset(_BaseDataset):
     """
 
     _ITEM_FORMAT = '%08d.npy'
-    _ITEM_RE = re.compile('(\d{8}).npy')
+    _ITEM_RE = re.compile(r'(\d{8}).npy')
     _PROVENANCE_FILE = 'PROVENANCE.txt'
 
     def get(self, i, mmap=False):
@@ -319,12 +314,12 @@ class NumpyDirDataset(_BaseDataset):
             print('[NumpydirDataset] loading %s' % filename)
         try:
             return np.load(filename, mmap_mode)
-        except IOError as e:
+        except OSError as e:
             raise IndexError(e)
 
     def set(self, i, x):
         if self.mode not in 'wa':
-            raise IOError('Dataset not opened for writing')
+            raise OSError('Dataset not opened for writing')
         filename = join(self.path, self._ITEM_FORMAT % i)
         if self.verbose:
             print('[NumpydirDataset] saving %s' % filename)
@@ -340,9 +335,9 @@ class NumpyDirDataset(_BaseDataset):
     @property
     def provenance(self):
         try:
-            with open(join(self.path, self._PROVENANCE_FILE), 'r') as f:
+            with open(join(self.path, self._PROVENANCE_FILE)) as f:
                 return f.read()
-        except IOError:
+        except OSError:
             return 'No available provenance'
 
     def _write_provenance(self, previous=None, comments=''):
@@ -353,7 +348,7 @@ class NumpyDirDataset(_BaseDataset):
 
 class HDF5Dataset(_BaseDataset):
     _ITEM_FORMAT = 'arr_%d'
-    _ITEM_RE = re.compile('arr_(\d+)')
+    _ITEM_RE = re.compile(r'arr_(\d+)')
 
     def __init__(self, path, mode='r', verbose=False):
         if mode not in ('r', 'w'):
@@ -395,7 +390,7 @@ class HDF5Dataset(_BaseDataset):
 
     def set(self, i, x):
         if 'w' not in self.mode:
-            raise IOError('Dataset not opened for writing')
+            raise OSError('Dataset not opened for writing')
 
         try:
             self._handle.create_carray('/', self._ITEM_FORMAT % i, obj=x)

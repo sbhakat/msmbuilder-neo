@@ -3,7 +3,6 @@
 # Copyright (c) 2017, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import copy
 import numpy as np
@@ -86,7 +85,7 @@ class BACE(MarkovStateModel):
         if self.save_all_maps:
             self.map_dict = {}
 
-        super(BACE, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fit(self, sequences, y=None):
         """Fit a BACE lumping model using a sequence of cluster assignments.
@@ -102,7 +101,7 @@ class BACE(MarkovStateModel):
         -------
         self
         """
-        super(BACE, self).fit(sequences, y=y)
+        super().fit(sequences, y=y)
         if self.n_macrostates is not None:
             self._do_lumping()
         else:
@@ -154,7 +153,7 @@ class BACE(MarkovStateModel):
     def partial_transform(self, sequence, mode='clip'):
         if self.n_macrostates is None:
             raise RuntimeError('n_macrostates must not be None to transform')
-        trimmed_sequence = super(BACE, self).partial_transform(sequence, mode)
+        trimmed_sequence = super().partial_transform(sequence, mode)
         if mode == 'clip':
             return [self.microstate_mapping_[seq] for seq in trimmed_sequence]
         elif mode == 'fill':

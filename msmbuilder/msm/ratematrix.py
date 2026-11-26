@@ -3,12 +3,11 @@
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division
 
 import numpy as np
 import scipy.linalg
 import scipy.optimize
-from six.moves import cStringIO
+from io import StringIO
 
 from . import _ratematrix
 from ._markovstatemodel import _transmat_mle_prinz
@@ -168,7 +167,7 @@ class ContinuousTimeMSM(BaseEstimator, _MappingTransformMixin,
         return self
 
     def summarize(self):
-        out = cStringIO()
+        out = StringIO()
         with printoptions(precision=4):
             print('n_states: %s' % self.n_states_, file=out)
             print(self.optimizer_state_.message, file=out)
@@ -190,8 +189,9 @@ class ContinuousTimeMSM(BaseEstimator, _MappingTransformMixin,
         lag_time = float(self.lag_time)
         loglikelihoods = []
 
+        # L-BFGS-B used to take 'iprint' for verbose output. Current SciPy
+        # ignores it (with an OptimizeWarning), so it is no longer passed.
         options = {
-            'iprint': 0 if self.verbose else -1,
             'eps': 1e-12,
             'ftol': 1e-12,
             'gtol': 1e-10,

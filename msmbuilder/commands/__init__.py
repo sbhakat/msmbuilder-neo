@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from .atom_indices import AtomIndices
 from .convert_chunked_project import ConvertChunkedProject
@@ -39,9 +38,6 @@ from .fit_transform import (tICACommand, ButterworthCommand, DoubleEWMACommand,
                             AffinityPropagationCommand, APMCommand,
                             AgglomerativeClusteringCommand, KSparseTICACommand)
 from .transform import TransformCommand
-from .example_datasets import (AlanineDipeptideDatasetCommand,
-                               FsPeptideDatasetCommand)
-from .atom_indices import AtomIndices
+from .example_datasets import (FsPeptideDatasetCommand)
 from .implied_timescales import ImpliedTimescales
 from .template_project import TemplateProjectCommand
-from .transform import TransformCommand

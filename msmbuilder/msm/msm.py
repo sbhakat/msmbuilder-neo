@@ -7,7 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
 
 import sys
 import warnings
@@ -380,7 +379,7 @@ Timescales:
             cnz_max=np.max(cnz),
             cnz_sum=np.sum(cnz),
             cnz_sum_per_lag=np.sum(cnz)/self.lag_time,
-            ts=', '.join(['{:.2f}'.format(t) for t in self.timescales_]),
+            ts=', '.join([f'{t:.2f}' for t in self.timescales_]),
             )
 
     @property

@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import numpy as np
 import scipy.linalg
@@ -467,8 +466,8 @@ def test_dump():
 
     d = tempfile.mkdtemp()
     try:
-        utils.dump(model, '{}/cmodel'.format(d))
-        m2 = utils.load('{}/cmodel'.format(d))
+        utils.dump(model, f'{d}/cmodel')
+        m2 = utils.load(f'{d}/cmodel')
         np.testing.assert_array_almost_equal(model.transmat_, m2.transmat_)
     finally:
         shutil.rmtree(d)

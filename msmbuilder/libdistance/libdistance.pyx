@@ -5,7 +5,6 @@
 # Copyright (c) 2016, Stanford University
 # All rights reserved.
 
-from __future__ import print_function
 import numpy as np
 import mdtraj as md
 from libc.float cimport FLT_MAX

@@ -7,7 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 
 from operator import itemgetter
 import numpy as np
@@ -15,7 +14,7 @@ from sklearn.utils import check_random_state
 from sklearn.base import ClusterMixin, TransformerMixin
 
 from . import MultiSequenceClusterMixin
-from . import _kmedoids
+from . import _kmedoids  # type: ignore[attr-defined]  # compiled extension
 from .. import libdistance
 from ..base import BaseEstimator
 
@@ -169,7 +168,7 @@ class _MiniBatchKMedoids(ClusterMixin, TransformerMixin):
 
 class MiniBatchKMedoids(MultiSequenceClusterMixin, _MiniBatchKMedoids, BaseEstimator):
     _allow_trajectory = True
-    __doc__ = _MiniBatchKMedoids.__doc__[: _MiniBatchKMedoids.__doc__.find('Attributes')] + \
+    __doc__ = (_MiniBatchKMedoids.__doc__ or '')[:(_MiniBatchKMedoids.__doc__ or '').find('Attributes')] + \
     '''
     Attributes
     ----------

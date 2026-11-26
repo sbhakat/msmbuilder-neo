@@ -6,7 +6,6 @@
 # Copyright (c) 2016, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import warnings
 
@@ -18,11 +17,7 @@ from msmbuilder import libdistance
 import itertools
 import inspect
 from sklearn.base import TransformerMixin
-# sklearn.externals.joblib is removed in scikit-learn v0.23
-try:
-    from joblib import Parallel, delayed
-except ImportError:
-    from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from ..base import BaseEstimator
 
 def zippy_maker(aind_tuples, top):
@@ -49,8 +44,8 @@ def dict_maker(zippy):
             resseqs=resseq,
             resids=resid,
             featurizer=featurizer,
-            featuregroup="{}".format(featuregroup),
-            otherinfo ="{}".format(other_info)
+            featuregroup=f"{featuregroup}",
+            otherinfo =f"{other_info}"
         )]
     return feature_descs
 
@@ -346,7 +341,7 @@ class LandMarkRMSDFeaturizer(RMSDFeaturizer):
 
     def __init__(self, reference_traj=None, atom_indices=None, sigma=0.3):
 
-        super(LandMarkRMSDFeaturizer, self).__init__(reference_traj,atom_indices)
+        super().__init__(reference_traj,atom_indices)
         self.sigma = sigma
 
     def _transform(self, value):
@@ -478,7 +473,7 @@ class AtomPairsFeaturizer(Featurizer):
             resnames += [[top.residue(ri).name for ri in resid_ids]]
 
         zippy = itertools.product(["AtomPairs"], ["Distance"],
-                                  ["Exponent {}".format(self.exponent)],
+                                  [f"Exponent {self.exponent}"],
                                   zip(aind, resseqs, residue_indices, resnames))
 
         feature_descs.extend(dict_maker(zippy))
@@ -1037,7 +1032,7 @@ class ContactFeaturizer(Featurizer):
     soft_min : bool, default=False
         If soft_min is true, we will use a diffrentiable version of
         the scheme. The exact expression used
-         is d = \frac{\beta}{log\sum_i{exp(\frac{\beta}{d_i}})} where
+         is d = \frac{\beta}{log\\sum_i{exp(\frac{\beta}{d_i}})} where
          beta is user parameter which defaults to 20nm. The expression
          we use is copied from the plumed mindist calculator.
          http://plumed.github.io/doc-v2.0/user-doc/html/mindist.html
@@ -1147,7 +1142,7 @@ class ContactFeaturizer(Featurizer):
             resseqs += [[top.residue(ri).resSeq for ri in resid_ids]]
             resnames += [[top.residue(ri).name for ri in resid_ids]]
         zippy = itertools.product(["Contact"], [self.scheme],
-                                  ["{}".format(self.soft_min_beta)],
+                                  [f"{self.soft_min_beta}"],
                                   zip(aind, resseqs, residue_indices, resnames))
 
         feature_descs.extend(dict_maker(zippy))
@@ -1194,7 +1189,7 @@ class BinaryContactFeaturizer(ContactFeaturizer):
     """
 
     def __init__(self, contacts='all', scheme='closest-heavy', ignore_nonprotein=True, cutoff=0.8):
-        super(BinaryContactFeaturizer, self).__init__(contacts=contacts, scheme=scheme,
+        super().__init__(contacts=contacts, scheme=scheme,
                                                     ignore_nonprotein=ignore_nonprotein)
         if cutoff < 0:
             raise ValueError('cutoff must be a positive distance [nm]')
@@ -1252,7 +1247,7 @@ class LogisticContactFeaturizer(ContactFeaturizer):
 
     def __init__(self, contacts='all', scheme='closest-heavy', ignore_nonprotein=True,
                                                             center=0.8, steepness=20):
-        super(LogisticContactFeaturizer, self).__init__(contacts=contacts, scheme=scheme,
+        super().__init__(contacts=contacts, scheme=scheme,
                                                     ignore_nonprotein=ignore_nonprotein)
         if center < 0:
             raise ValueError('center must be a positive distance [nm]')
@@ -1361,7 +1356,7 @@ class RawPositionsFeaturizer(Featurizer):
     """
 
     def __init__(self, atom_indices=None, ref_traj=None):
-        super(RawPositionsFeaturizer, self).__init__()
+        super().__init__()
 
         self.atom_indices = atom_indices
 
@@ -1508,7 +1503,7 @@ class Slicer(Featurizer):
             return traj[:, :self.first]
 
 
-class FirstSlicer(object):
+class FirstSlicer:
 
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("Please use Slicer(first=x)")

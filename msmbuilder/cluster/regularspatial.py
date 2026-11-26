@@ -7,7 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 import numpy as np
 from sklearn.base import ClusterMixin, TransformerMixin
 
@@ -129,12 +128,11 @@ class RegularSpatial(MultiSequenceClusterMixin, _RegularSpatial, BaseEstimator):
         return self
 
     def summarize(self):
-        return """
+        return f"""
 RegularSpatial clustering
 -------------------------
-d_min      : {d_min}
-metric     : {metric}
+d_min      : {self.d_min}
+metric     : {self.metric}
 
-n_clusters : {n_clusters}
-""".format(d_min=self.d_min, metric=self.metric,
-           n_clusters=self.n_clusters_)
+n_clusters : {self.n_clusters_}
+"""

@@ -3,7 +3,6 @@
 # Copyright (c) 2017, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import numpy as np
 from msmbuilder.cluster import LandmarkAgglomerative
@@ -75,7 +74,7 @@ class MVCA(MarkovStateModel):
         self.n_landmarks = n_landmarks
         self.landmark_strategy = landmark_strategy
         self.random_state = random_state
-        super(MVCA, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fit(self, sequences, y=None):
         """Fit a MVCA lumping model using a sequence of cluster assignments.
@@ -91,7 +90,7 @@ class MVCA(MarkovStateModel):
         -------
         self
         """
-        super(MVCA, self).fit(sequences, y=y)
+        super().fit(sequences, y=y)
         if self.n_macrostates is not None:
             self._do_lumping()
         else:
@@ -121,7 +120,7 @@ class MVCA(MarkovStateModel):
     def partial_transform(self, sequence, mode='clip'):
         if self.n_macrostates is None:
             raise RuntimeError('n_macrostates must not be None to transform')
-        trimmed_sequence = super(MVCA, self).partial_transform(sequence, mode)
+        trimmed_sequence = super().partial_transform(sequence, mode)
         if mode == 'clip':
             return [self.microstate_mapping_[seq] for seq in trimmed_sequence]
         elif mode == 'fill':

@@ -12,8 +12,8 @@ from os.path import join
 from zipfile import ZipFile
 
 import numpy as np
-from six.moves.urllib.error import HTTPError
-from six.moves.urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import urlopen
 from sklearn.utils import check_random_state
 
 
@@ -40,7 +40,7 @@ def retry(max_retries=1):
     return retry_func
 
 
-class Dataset(object):
+class Dataset:
     @classmethod
     def description(cls):
         """Get a description from the Notes section of the docstring."""
@@ -70,19 +70,18 @@ class _MDDataset(Dataset):
 
     def _msmbdata_cache(self):
         if self.verbose:
-            print("Copying {} from msmb_data package to {}"
-                  .format(self.target_directory, self.data_home))
+            print(f"Copying {self.target_directory} from msmb_data package to {self.data_home}"
+                  )
         msmb_data = has_msmb_data()
         assert msmb_data is not None
-        shutil.copytree("{}/{}".format(msmb_data, self.target_directory),
+        shutil.copytree(f"{msmb_data}/{self.target_directory}",
                         self.data_dir)
 
     @retry(3)
     def _figshare_cache(self):
         if self.verbose:
-            print('downloading {} from {} to {}'
-                  .format(self.target_directory, self.data_url,
-                          self.data_home))
+            print(f'downloading {self.target_directory} from {self.data_url} to {self.data_home}'
+                  )
         fhandle = urlopen(self.data_url)
         buf = BytesIO(fhandle.read())
         zip_file = ZipFile(buf)
@@ -101,7 +100,7 @@ class _MDDataset(Dataset):
             else:
                 self._figshare_cache()
         elif self.verbose:
-            print("{} already is cached".format(self.target_directory))
+            print(f"{self.target_directory} already is cached")
 
         self.cached = True
 
@@ -142,13 +141,11 @@ class _NWell(Dataset):
         self.cache_path = self._get_cache_path(random_state)
 
     def _get_cache_path(self, random_state):
-        path = "{}/version-{}/randomstate-{}".format(self.data_dir,
-                                                     self.version,
-                                                     self.random_state)
+        path = f"{self.data_dir}/version-{self.version}/randomstate-{self.random_state}"
         return path
 
     def _load(self, path):
-        return [np.load("{}/{}.npy".format(path, i))
+        return [np.load(f"{path}/{i}.npy")
                 for i in range(self.n_trajectories)]
 
     def _save(self, path, trajectories):
@@ -156,7 +153,7 @@ class _NWell(Dataset):
         if not exists(path):
             makedirs(path)
         for i, traj in enumerate(trajectories):
-            np.save("{}/{}.npy".format(path, i), traj)
+            np.save(f"{path}/{i}.npy", traj)
 
     def cache(self):
         random = check_random_state(self.random_state)

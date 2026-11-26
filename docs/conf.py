@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # MSMBuilder documentation build configuration file, created by
 # sphinx-quickstart on Tue Aug  4 10:13:01 2015.

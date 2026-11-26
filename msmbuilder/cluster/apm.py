@@ -1,4 +1,3 @@
-from __future__ import absolute_import, print_function, division
 __author__ = 'LIU Song <stephenliu1989@gmail.com>'
 __contributors__ = "Fu Kit SHEONG, Xuhui HUANG"
 __version__ = "0.91"
@@ -206,7 +205,7 @@ class APM(BaseEstimator):
             micro_state = self.__micro_stack[
                 -1
             ]  # last element of self.__micro_stack
-            if self._get_Lagtime(micro_state, macro_state) is 0:
+            if self._get_Lagtime(micro_state, macro_state) == 0:
                 # split if the relaxation time is too long
                 self._do_split(micro_state=micro_state, sub_clus=self.sub_clus)
             else:

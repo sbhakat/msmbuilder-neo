@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 
 import warnings
 from itertools import permutations
@@ -92,12 +91,12 @@ def test_2_state():
 
     # For each value of various options,
     # create a 2 state HMM and see if it is correct.
-    class two_state_tester(object):
+    class two_state_tester:
         def __init__(self, init_algo, reversible_type):
             self.init_algo = init_algo
             self.reversible_type = reversible_type
-            self.description = ("{}.test_3_state_{}_{}"
-                                .format(__name__, init_algo, reversible_type))
+            self.description = (f"{__name__}.test_3_state_{init_algo}_{reversible_type}"
+                                )
 
         def __call__(self, *args, **kwargs):
             model = GaussianHMM(n_states=2, init_algo=self.init_algo,
@@ -120,12 +119,12 @@ def test_3_state():
 
     # For each value of various options,
     # create a 3 state HMM and see if it is correct.
-    class three_state_tester(object):
+    class three_state_tester:
         def __init__(self, init_algo, reversible_type):
             self.init_algo = init_algo
             self.reversible_type = reversible_type
-            self.description = ("{}.test_2_state_{}_{}"
-                                .format(__name__, init_algo, reversible_type))
+            self.description = (f"{__name__}.test_2_state_{init_algo}_{reversible_type}"
+                                )
 
         def __call__(self, *args, **kwargs):
             model = GaussianHMM(n_states=3, init_algo=self.init_algo,

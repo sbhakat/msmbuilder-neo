@@ -113,7 +113,7 @@ def test_soft_min_contact_featurizer():
     featuizer = ContactFeaturizer(contacts=[[ri, rj]], scheme='closest', soft_min=True,
                                   soft_min_beta=soft_min_beta)
 
-    features = featuizer.transform(([traj]))[0]
+    features = featuizer.transform([traj])[0]
     distances = md.compute_distances(traj, atom_pairs)
     distances = soft_min_beta / \
         np.log(np.sum(np.exp(soft_min_beta / distances), axis=1))

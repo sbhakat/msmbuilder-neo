@@ -7,9 +7,7 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 import numpy as np
-import six
 import scipy.spatial.distance
 import warnings
 from msmbuilder import libdistance
@@ -48,7 +46,7 @@ POOLING_FUNCTIONS = {
 
 
 def pdist(X, metric='euclidean'):
-    if isinstance(metric, six.string_types):
+    if isinstance(metric, str):
         return libdistance.pdist(X, metric)
 
     n = len(X)
@@ -59,7 +57,7 @@ def pdist(X, metric='euclidean'):
 
 
 def cdist(XA, XB, metric='euclidean'):
-    if isinstance(metric, six.string_types):
+    if isinstance(metric, str):
         return libdistance.cdist(XA, XB, metric)
 
     nA, nB = len(XA), len(XB)
@@ -251,7 +249,7 @@ class _LandmarkAgglomerative(ClusterMixin, TransformerMixin):
         try:
             pooling_func = POOLING_FUNCTIONS[pfunc_name]
         except KeyError:
-                raise ValueError("linkage {} is not supported".format(pfunc_name))
+                raise ValueError(f"linkage {pfunc_name} is not supported")
 
         pooled_distances = np.empty(len(X))
         pooled_distances.fill(np.inf)
@@ -268,7 +266,7 @@ class _LandmarkAgglomerative(ClusterMixin, TransformerMixin):
                 pooled_distances[mask] = d[mask]
                 labels[mask] = i
             else:
-                print("No data points were assigned to cluster {}".format(i))
+                print(f"No data points were assigned to cluster {i}")
 
         return labels
 

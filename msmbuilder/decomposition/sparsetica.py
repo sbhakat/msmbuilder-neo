@@ -7,8 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
-from six import PY2
 import numpy as np
 import scipy.linalg
 from .tica import tICA
@@ -122,7 +120,7 @@ class SparseTICA(tICA):
     def __init__(self, n_components=None, lag_time=1, rho=0.01,
                  kinetic_mapping=False, epsilon=1e-6, shrinkage=None,
                  tolerance=1e-6, maxiter=10000, verbose=False):
-        super(SparseTICA, self).__init__(n_components, lag_time=lag_time,
+        super().__init__(n_components, lag_time=lag_time,
                                          kinetic_mapping=kinetic_mapping)
         self.rho = rho
         self.epsilon = epsilon
@@ -137,12 +135,12 @@ class SparseTICA(tICA):
 
         if self.rho <= 0:
             # if no sparse regularization, it's just regular tICA
-            return super(SparseTICA, self)._solve()
+            return super()._solve()
 
         A = self.offset_correlation_
         B = self.covariance_
 
-        self._eigenvalues_ = np.zeros((self.n_components))
+        self._eigenvalues_ = np.zeros(self.n_components)
         self._eigenvectors_ = np.zeros((self.n_features, self.n_components))
 
         for i in range(self.n_components):
@@ -166,25 +164,21 @@ class SparseTICA(tICA):
         nonzeros = np.sum(np.abs(self.eigenvectors_) > 0, axis=0)
         active = '[%s]' % ', '.join(['%d/%d' % (n, self.n_features) for n in nonzeros[:5]])
 
-        return """Sparse time-structure based Independent Components Analysis (tICA)
+        return f"""Sparse time-structure based Independent Components Analysis (tICA)
 ------------------------------------------------------------------
-n_components        : {n_components}
-shrinkage           : {shrinkage}
-lag_time            : {lag_time}
-kinetic_mapping     : {kinetic_mapping}
-rho                 : {rho}
-n_features          : {n_features}
+n_components        : {self.n_components}
+shrinkage           : {self.shrinkage_}
+lag_time            : {self.lag_time}
+kinetic_mapping     : {self.kinetic_mapping}
+rho                 : {self.rho}
+n_features          : {self.n_features}
 
 Top 5 timescales :
-{timescales}
+{self.timescales_[:5]}
 
 Top 5 eigenvalues :
-{eigenvalues}
+{self.eigenvalues_[:5]}
 
 Number of active degrees of freedom:
 {active}
-""".format(n_components=self.n_components, lag_time=self.lag_time,
-           rho=self.rho, shrinkage=self.shrinkage_,
-           kinetic_mapping=self.kinetic_mapping,
-           timescales=self.timescales_[:5], eigenvalues=self.eigenvalues_[:5],
-           n_features=self.n_features, active=active)
+"""

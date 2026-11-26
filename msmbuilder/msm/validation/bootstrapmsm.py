@@ -3,7 +3,6 @@
 # Copyright (c) 2016, Stanford University
 # All rights reserved.
 
-from __future__ import absolute_import, division
 from multiprocessing import Pool, cpu_count
 from msmbuilder.utils import list_of_1d
 from sklearn.utils import resample
