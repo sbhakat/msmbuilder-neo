@@ -1,8 +1,4 @@
 import numpy as np
-cimport numpy as np
-from libcpp.vector cimport vector
-from libcpp.string cimport string
-from cpython.ref cimport PyObject
 
 import time
 import warnings
@@ -13,28 +9,10 @@ from mdtraj.utils import ensure_type
 from .discrete_approx import discrete_approx_mvn, NotSatisfiableError
 from ..utils import check_iter_of_sequences, printoptions
 from ..msm._markovstatemodel import _transmat_mle_prinz
+from . import _hmm_core
 
-cdef extern from "Trajectory.h" namespace "msmbuilder":
-    cdef cppclass Trajectory:
-        Trajectory(PyObject*, char*, int, int, int, int) except +
-        Trajectory()
 
-cdef extern from "VonMisesHMMFitter.h" namespace "msmbuilder":
-    cdef cppclass VonMisesHMMFitter[T]:
-        VonMisesHMMFitter(VonMisesHMM, int, int, int, double*) except +
-        void set_transmat(double*)
-        void set_means_and_kappas(double*, double*)
-        void fit(const vector[Trajectory]&, double)
-        double score_trajectories(vector[Trajectory]&)
-        double predict_state_sequence(Trajectory& trajectory, int* state_sequence)
-        int get_fit_iterations()
-        void get_transition_counts(double*)
-        void get_cosobs(double*)
-        void get_sinobs(double*)
-        void get_post(double*)
-        void get_log_probability(double*)
-
-cdef public class VonMisesHMM[object VonMisesHMMObject, type VonMisesHMMType]:
+class VonMisesHMM:
     """Hidden Markov Model with von Mises Emissions
 
     The von Mises distribution, (also known as the circular normal
@@ -100,19 +78,16 @@ cdef public class VonMisesHMM[object VonMisesHMMObject, type VonMisesHMMType]:
     circle and the sphere." Journal of vision 10.11 (2010).
     """
 
-    cdef int n_states, n_features, n_init, n_iter
-    cdef float thresh
-    cdef random_state
-    cdef startprob
-    cdef stats
-    cdef reversible_type
-    cdef _means_, _kappas_, _transmat_, _populations_, _fit_logprob_, _fit_time_
-    # Lets scikit-learn attach its own bookkeeping attributes (for example
-    # callback context in pipelines); a cdef class has no __dict__ otherwise.
-    cdef dict __dict__
+    # Fitted parameters; None until fit() runs.
+    _means_ = None
+    _kappas_ = None
+    _transmat_ = None
+    _populations_ = None
+    _fit_logprob_ = None
+    _fit_time_ = None
 
     def __sklearn_is_fitted__(self):
-        # Fitted attributes are Cython fields exposed as properties, which
+        # Fitted attributes are private fields exposed as properties, which
         # sklearn's default check (vars(estimator)) cannot see.
         return self._transmat_ is not None
 
@@ -122,7 +97,8 @@ cdef public class VonMisesHMM[object VonMisesHMMObject, type VonMisesHMMType]:
         self.n_features = -1
         self.n_init = int(n_init)
         self.n_iter = int(n_iter)
-        self.thresh = float(thresh)
+        # Stored at float32 precision, as the original Cython attribute was.
+        self.thresh = float(np.float32(thresh))
         self.reversible_type = reversible_type
         self.random_state = random_state
         self.startprob = np.tile(1.0/n_states, n_states)
@@ -312,12 +288,9 @@ timescales: {timescales}
         total_iters = 0
         for run in range(self.n_init):
             self._init(sequences)
-            if dtype == np.float32:
-                self._fit_float(sequences)
-            elif dtype == np.float64:
-                self._fit_double(sequences)
-            else:
+            if dtype not in (np.float32, np.float64):
                 raise ValueError('Unsupported data type: '+str(dtype))
+            self._fit_em(sequences)
             total_iters += len(self.stats['log_probability'])
 
             # If this is better than our other runs, keep it
@@ -355,24 +328,6 @@ timescales: {timescales}
         if any(s.shape[1] != n_features for s in sequences):
             raise ValueError('All sequences must have %d features' % n_features)
 
-    cdef vector[Trajectory] _convert_sequences_to_vector_float(self, sequences):
-        """Convert the sequences supplied by the user into the form needed by the C++ code."""
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[float, ndim=2] array
-        for s in sequences:
-            array = s
-            trajectoryVec.push_back(Trajectory(<PyObject*> array, <char*> &array[0,0], array.shape[0], array.shape[1], array.strides[0], array.strides[1]))
-        return trajectoryVec
-
-    cdef vector[Trajectory] _convert_sequences_to_vector_double(self, sequences):
-        """Convert the sequences supplied by the user into the form needed by the C++ code."""
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[double, ndim=2] array
-        for s in sequences:
-            array = s
-            trajectoryVec.push_back(Trajectory(<PyObject*> array, <char*> &array[0,0], array.shape[0], array.shape[1], array.strides[0], array.strides[1]))
-        return trajectoryVec
-
     def _init(self, sequences):
         """Find initial means (hot start)"""
         self._transmat_ = np.ones((self.n_states, self.n_states)) * (1.0 / self.n_states)
@@ -391,43 +346,55 @@ timescales: {timescales}
                                   cluster_centers[:, self.n_features:])
         self._kappas_ = np.ones((self.n_states, self.n_features))
 
-    def _fit_float(self, sequences):
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        trajectoryVec = self._convert_sequences_to_vector_float(sequences)
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[float] *fitter = new VonMisesHMMFitter[float](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            fitter.fit(trajectoryVec, self.thresh)
-        finally:
-            del fitter
+    # --- numerical core (Numba kernels in _hmm_core) -------------------------
 
-    def _fit_double(self, sequences):
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        trajectoryVec = self._convert_sequences_to_vector_double(sequences)
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[double] *fitter = new VonMisesHMMFitter[double](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            fitter.fit(trajectoryVec, self.thresh)
-        finally:
-            del fitter
+    def _emission_params(self):
+        return (np.asarray(self._means_, dtype=np.float64), np.asarray(self._kappas_, dtype=np.float64), np.log(scipy.special.i0(np.asarray(self._kappas_, dtype=np.float64))))
+
+    def _log_startprob(self):
+        # The C++ fitter used before MSMBuilder Neo was handed startprob
+        # where it expected log(startprob), which shifted every reported
+        # log-likelihood by n_trajectories * (1/n_states + log(n_states)).
+        return np.log(np.asarray(self.startprob, dtype=np.float64))
+
+    def _fit_em(self, sequences):
+        """Expectation-maximization with the current parameters as the
+        starting point. Mirrors the old C++ HMMFitter::fit loop: the M-step
+        runs after every E-step unless the log-probability has converged,
+        and self.stats is refreshed just before each M-step."""
+        X, offsets = _hmm_core.concatenate(sequences)
+        log_startprob = self._log_startprob()
+        iter_logprob = []
+        for i in range(self.n_iter):
+            logprob, trans, post, s1, s2 = _hmm_core.vonmises_estep(
+                X, offsets, log_startprob, _hmm_core.log_transmat(self._transmat_),
+                *self._emission_params())
+            iter_logprob.append(logprob)
+            if i > 0 and abs(iter_logprob[i] - iter_logprob[i - 1]) < self.thresh:
+                break
+            self.stats = {'trans': trans, 'cosobs': s1, 'sinobs': s2, 'post': post,
+                          'log_probability': np.array(iter_logprob)}
+            self._do_mstep()
+
+    def _score(self, sequences):
+        X, offsets = _hmm_core.concatenate(sequences)
+        return _hmm_core.vonmises_score(X, offsets, self._log_startprob(),
+                                  _hmm_core.log_transmat(self._transmat_),
+                                  *self._emission_params())
+
+    def _predict(self, sequences):
+        log_startprob = self._log_startprob()
+        log_tm = _hmm_core.log_transmat(self._transmat_)
+        params = self._emission_params()
+        logprob = 0.0
+        viterbi_sequences = []
+        for s in sequences:
+            lp, states = _hmm_core.vonmises_viterbi(
+                np.ascontiguousarray(s, dtype=np.float64), log_startprob, log_tm, *params)
+            logprob += lp
+            viterbi_sequences.append(states)
+        return (logprob, viterbi_sequences)
+
 
     def _getdiff(self, means, difference_cutoff):
         diff = np.zeros((self.n_features, self.n_states, self.n_states))
@@ -478,50 +445,9 @@ timescales: {timescales}
         """
         self._validate_sequences(sequences)
         dtype = sequences[0].dtype
-        if dtype == np.float32:
-            return self._score_float(sequences)
-        elif dtype == np.float64:
-            return self._score_double(sequences)
-        else:
+        if dtype not in (np.float32, np.float64):
             raise ValueError('Unsupported data type: '+str(dtype))
-
-    cdef _score_float(self, sequences):
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        trajectoryVec = self._convert_sequences_to_vector_float(sequences)
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[float] *fitter = new VonMisesHMMFitter[float](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            return fitter.score_trajectories(trajectoryVec)
-        finally:
-            del fitter
-
-    cdef _score_double(self, sequences):
-        cdef vector[Trajectory] trajectoryVec
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        trajectoryVec = self._convert_sequences_to_vector_double(sequences)
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[double] *fitter = new VonMisesHMMFitter[double](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            return fitter.score_trajectories(trajectoryVec)
-        finally:
-            del fitter
+        return self._score(sequences)
 
     def predict(self, sequences):
         """Find most likely hidden-state sequence corresponding to
@@ -546,114 +472,9 @@ timescales: {timescales}
         """
         self._validate_sequences(sequences)
         dtype = sequences[0].dtype
-        if dtype == np.float32:
-            return self._predict_float(sequences)
-        elif dtype == np.float64:
-            return self._predict_double(sequences)
-        else:
+        if dtype not in (np.float32, np.float64):
             raise ValueError('Unsupported data type: '+str(dtype))
-
-    cdef _predict_float(self, sequences):
-        cdef Trajectory trajectory
-        cdef np.ndarray[np.int32_t, ndim=1] state_sequence
-        cdef np.ndarray[float, ndim=2] array
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[float] *fitter = new VonMisesHMMFitter[float](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            logprob = 0.0
-            viterbi_sequences = []
-            for s in sequences:
-                array = s
-                trajectory = Trajectory(<PyObject*> array, <char*> &array[0,0], array.shape[0], array.shape[1], array.strides[0], array.strides[1])
-                state_sequence = np.empty(len(s), dtype=np.int32)
-                logprob += fitter.predict_state_sequence(trajectory, <int*> &state_sequence[0])
-                viterbi_sequences.append(state_sequence)
-            return (logprob, viterbi_sequences)
-        finally:
-            del fitter
-
-    cdef _predict_double(self, sequences):
-        cdef Trajectory trajectory
-        cdef np.ndarray[np.int32_t, ndim=1] state_sequence
-        cdef np.ndarray[double, ndim=2] array
-        cdef np.ndarray[double, ndim=1] startprob
-        cdef np.ndarray[double, ndim=2] transmat
-        cdef np.ndarray[double, ndim=2] means
-        cdef np.ndarray[double, ndim=2] kappas
-        startprob = self.startprob
-        transmat = self._transmat_
-        means = self._means_.astype(np.float64)
-        kappas = self._kappas_.astype(np.float64)
-        cdef VonMisesHMMFitter[double] *fitter = new VonMisesHMMFitter[double](self, self.n_states, self.n_features, self.n_iter, <double*> &startprob[0])
-        fitter.set_transmat(<double*> &transmat[0,0])
-        fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-        try:
-            logprob = 0.0
-            viterbi_sequences = []
-            for s in sequences:
-                array = s
-                trajectory = Trajectory(<PyObject*> array, <char*> &array[0,0], array.shape[0], array.shape[1], array.strides[0], array.strides[1])
-                state_sequence = np.empty(len(s), dtype=np.int32)
-                logprob += fitter.predict_state_sequence(trajectory, <int*> &state_sequence[0])
-                viterbi_sequences.append(state_sequence)
-            return (logprob, viterbi_sequences)
-        finally:
-            del fitter
-
-    cdef _record_stats_float(self, VonMisesHMMFitter[float]* fitter):
-        """Copy various statistics from the C++ class to this one."""
-        cdef np.ndarray[double, ndim=2] transition_counts
-        cdef np.ndarray[double, ndim=2] cosobs
-        cdef np.ndarray[double, ndim=2] sinobs
-        cdef np.ndarray[double, ndim=1] post
-        cdef np.ndarray[double, ndim=1] log_probability
-        transition_counts = np.empty((self.n_states, self.n_states))
-        cosobs = np.empty((self.n_states, self.n_features))
-        sinobs = np.empty((self.n_states, self.n_features))
-        post = np.empty(self.n_states)
-        log_probability = np.empty(fitter.get_fit_iterations())
-        fitter.get_transition_counts(<double*> &transition_counts[0,0])
-        fitter.get_cosobs(<double*> &cosobs[0,0])
-        fitter.get_sinobs(<double*> &sinobs[0,0])
-        fitter.get_post(<double*> &post[0])
-        fitter.get_log_probability(<double*> &log_probability[0])
-        self.stats['trans'] = transition_counts
-        self.stats['cosobs'] = cosobs
-        self.stats['sinobs'] = sinobs
-        self.stats['post'] = post
-        self.stats['log_probability'] = log_probability
-
-    cdef _record_stats_double(self, VonMisesHMMFitter[double]* fitter):
-        """Copy various statistics from the C++ class to this one."""
-        cdef np.ndarray[double, ndim=2] transition_counts
-        cdef np.ndarray[double, ndim=2] cosobs
-        cdef np.ndarray[double, ndim=2] sinobs
-        cdef np.ndarray[double, ndim=1] post
-        cdef np.ndarray[double, ndim=1] log_probability
-        transition_counts = np.empty((self.n_states, self.n_states))
-        cosobs = np.empty((self.n_states, self.n_features))
-        sinobs = np.empty((self.n_states, self.n_features))
-        post = np.empty(self.n_states)
-        log_probability = np.empty(fitter.get_fit_iterations())
-        fitter.get_transition_counts(<double*> &transition_counts[0,0])
-        fitter.get_cosobs(<double*> &cosobs[0,0])
-        fitter.get_sinobs(<double*> &sinobs[0,0])
-        fitter.get_post(<double*> &post[0])
-        fitter.get_log_probability(<double*> &log_probability[0])
-        self.stats['trans'] = transition_counts
-        self.stats['cosobs'] = cosobs
-        self.stats['sinobs'] = sinobs
-        self.stats['post'] = post
-        self.stats['log_probability'] = log_probability
+        return self._predict(sequences)
 
     def __reduce__(self):
         """Pickle support"""
@@ -671,34 +492,8 @@ timescales: {timescales}
         self._fit_time_ = state[5]
         self.n_features = state[6]
 
-cdef public void _do_mstep_float(VonMisesHMM hmm, VonMisesHMMFitter[float]* fitter):
-    """This function exists to let the C++ code call back into Cython."""
-    cdef np.ndarray[double, ndim=2] transmat
-    cdef np.ndarray[double, ndim=2] means
-    cdef np.ndarray[double, ndim=2] kappas
-    hmm._record_stats_float(fitter)
-    hmm._do_mstep()
-    transmat = hmm._transmat_
-    means = hmm._means_.astype(np.float64)
-    kappas = hmm._kappas_.astype(np.float64)
-    fitter.set_transmat(<double*> &transmat[0,0])
-    fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
 
-cdef public void _do_mstep_double(VonMisesHMM hmm, VonMisesHMMFitter[double]* fitter):
-    """This function exists to let the C++ code call back into Cython."""
-    cdef np.ndarray[double, ndim=2] transmat
-    cdef np.ndarray[double, ndim=2] means
-    cdef np.ndarray[double, ndim=2] kappas
-    hmm._record_stats_double(fitter)
-    hmm._do_mstep()
-    transmat = hmm._transmat_
-    means = hmm._means_.astype(np.float64)
-    kappas = hmm._kappas_.astype(np.float64)
-    fitter.set_transmat(<double*> &transmat[0,0])
-    fitter.set_means_and_kappas(<double*> &means[0,0], <double*> &kappas[0,0])
-
-
-class inverse_mbessel_ratio(object):
+class _InverseMBesselRatio:
 
     """
     Inverse the function given by the ratio modified Bessel function of the
@@ -757,5 +552,5 @@ class inverse_mbessel_ratio(object):
         denominator = scipy.special.iv(0, x)
         return numerator / denominator
 
-# Shadow the inverse_mbessel_ratio with an instance.
-inverse_mbessel_ratio = inverse_mbessel_ratio()
+# Module-level instance; the spline is fitted on first use.
+inverse_mbessel_ratio = _InverseMBesselRatio()
