@@ -25,7 +25,9 @@ def test_code_works():
 
     sequences = featurizer.transform(trajectories)
 
-    hmm = VonMisesHMM(n_states=4, n_init=1)
+    # Seeded: a single random start misses the slow process (no timescale
+    # above 50) for about 3% of starts.
+    hmm = VonMisesHMM(n_states=4, n_init=1, random_state=0)
     hmm.fit(sequences)
 
     assert len(hmm.timescales_ == 3)

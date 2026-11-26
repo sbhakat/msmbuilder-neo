@@ -94,10 +94,12 @@ def test_index():
 def test_multitraj_cluster_ids_1():
     # cluster_ids_ should be of the form (traj_i, frame_i)
 
-    random = np.random.RandomState()
+    # Seeded: with a single random start, k-medoids puts both medoids in one
+    # blob for about 0.4% of starts (same rate before and after the port).
+    random = np.random.RandomState(0)
     trajs = [random.randn(40, 2),
              random.randn(20, 2) + 5]
-    km = KMedoids(n_clusters=2)
+    km = KMedoids(n_clusters=2, random_state=0)
     km.fit(trajs)
     id1, id2 = km.cluster_ids_
 
