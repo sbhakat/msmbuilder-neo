@@ -81,3 +81,27 @@ def test_5():
     # not "symmetric". And the cutoff chosen is just heuristic.
     assert np.linalg.norm(b_msm.all_transmats_.mean(axis=0)
                           - mle_msm.transmat_) < 1e-2
+
+
+class _FixedRandom(np.random.RandomState):
+    """A RandomState whose rand(n_chains, m) returns preset rows."""
+
+    def __init__(self, rows):
+        super().__init__(0)
+        self.rows = rows
+
+    def rand(self, n_chains, m):
+        return np.array([self.rows[c][:m] for c in range(n_chains)])
+
+
+def test_chains_are_independent():
+    # Each chain must keep its own running sum of K. If chains shared it (as
+    # the old Cython/C sampler did), chain 0 would depend on chain 1.
+    Z = np.array([[1, 10, 2], [2, 26, 3], [15, 20, 20]]).astype(np.double)
+    rs = np.random.RandomState(0)
+    rows = [rs.rand(4 * 50), rs.rand(4 * 50)]
+    two = list(metzner_mcmc_fast(Z, 50, n_thin=50, n_chains=2,
+                                 random_state=_FixedRandom(rows)))
+    one = list(metzner_mcmc_fast(Z, 50, n_thin=50, n_chains=1,
+                                 random_state=_FixedRandom(rows[:1])))
+    np.testing.assert_array_equal(two[0], one[0])
