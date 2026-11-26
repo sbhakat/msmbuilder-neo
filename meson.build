@@ -51,7 +51,7 @@ else
   message('OpenMP not found; building single-threaded kernels')
 endif
 
-# The HMM fitters use SSE intrinsics on x86 and sse2neon on ARM.
+# The vendored Theobald RMSD kernel uses SSE3 on x86 (NEON on ARM).
 simd_args = []
 if host_machine.cpu_family() in ['x86', 'x86_64'] and cpp.get_argument_syntax() == 'gcc'
   simd_args += ['-mssse3']
@@ -167,29 +167,4 @@ py.extension_module('_kmedoids',
   dependencies: [np_dep],
   install: true, subdir: 'msmbuilder/cluster')
 
-hmm_inc = include_directories('msmbuilder/hmm', 'msmbuilder/hmm/src/include',
-                              'msmbuilder/hmm/src', 'msmbuilder/hmm/cephes')
-
-# The HMM fitters are C++ classes that call back into Cython through
-# `cdef public` functions, so the C++ sources need the header Cython writes
-# next to the generated module. Run Cython explicitly so that header is a
-# declared output and is built before the C++ sources that include it.
-cython = find_program('cython')
-foreach hmm : [
-    ['gaussian', ['msmbuilder/hmm/src/GaussianHMMFitter.cpp']],
-    ['vonmises', ['msmbuilder/hmm/src/VonMisesHMMFitter.cpp',
-                  'msmbuilder/hmm/cephes/i0.c', 'msmbuilder/hmm/cephes/chbevl.c']],
-  ]
-  hmm_name = hmm[0]
-  hmm_cy = custom_target(hmm_name + '_cython',
-    input: 'msmbuilder/hmm/' + hmm_name + '.pyx',
-    output: [hmm_name + '.cpp', hmm_name + '.h'],
-    command: [cython, '-3', '--fast-fail', '--cplus', '@INPUT@', '-o', '@OUTPUT0@'],
-  )
-  py.extension_module(hmm_name,
-    hmm_cy, hmm[1],
-    cpp_args: simd_args,
-    include_directories: hmm_inc,
-    dependencies: [np_dep, omp_dep],
-    install: true, subdir: 'msmbuilder/hmm')
-endforeach
+# The HMMs (msmbuilder/hmm) are pure Python with Numba kernels; nothing to compile.

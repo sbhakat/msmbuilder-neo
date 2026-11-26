@@ -39,6 +39,7 @@ dependencies = [
     "joblib",
     "pandas>=1.5",
     "mdtraj>=1.10",
+    "numba>=0.60",
     "tables>=3.8",
     "fastcluster",
     "jinja2",
