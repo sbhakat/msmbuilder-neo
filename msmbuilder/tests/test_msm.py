@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 
 import os
 import tempfile
@@ -9,12 +8,7 @@ import pandas as pd
 import sklearn.pipeline
 from mdtraj.testing import eq
 from numpy.testing import assert_approx_equal
-from six import PY3
-# sklearn.externals.joblib is removed in scikit-learn v0.23
-try:
-    from joblib import load, dump
-except ImportError:
-    from sklearn.externals.joblib import load, dump
+from joblib import load, dump
 from sklearn.pipeline import Pipeline
 
 from msmbuilder import cluster
@@ -225,13 +219,6 @@ def test_nan():
     model.fit(seq)
     assert model.n_states_ == 2
     assert model.mapping_ == {0: 0, 1: 1}
-
-    if not PY3:
-        model = MarkovStateModel()
-        seq = [0, 1, 0, None, 0, 1]
-        model.fit(seq)
-        assert model.n_states_ == 2
-        assert model.mapping_ == {0: 0, 1: 1}
 
 
 def test_inverse_transform():

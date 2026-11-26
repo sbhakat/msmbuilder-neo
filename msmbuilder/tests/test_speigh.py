@@ -59,7 +59,7 @@ def eigh(A, B=None):
     return w, V
 
 
-class Test_scdeflate(object):
+class Test_scdeflate:
     def test_1(self):
         n = 4
         A = rand_sym(n)
@@ -97,7 +97,7 @@ class Test_scdeflate(object):
                     np.allclose(remaining_V1[:, i], -remaining_V2[:, i]))
 
 
-class Test_speigh_1(object):
+class Test_speigh_1:
     def test_1(self):
         # test with indefinite A matrix, identity B
         n = 4
@@ -145,7 +145,7 @@ class Test_speigh_1(object):
         np.testing.assert_array_almost_equal(v0 ** 2, V[:, 0] ** 2)
 
 
-class Test_speigh_2(object):
+class Test_speigh_2:
     def test_1(self):
         # test with indefinite A matrix, identity B
         n = 4

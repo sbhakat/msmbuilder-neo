@@ -7,7 +7,6 @@ Use a pre-fit model to transform a dataset.
 
 '''
 
-from __future__ import print_function, absolute_import
 
 import os
 
@@ -55,7 +54,7 @@ class TransformCommand(Command):
         print('-' * 25, '\n')
 
         if os.path.exists(self.args.transformed):
-            self.error('File exists:' % self.args.transformed)
+            self.error('File exists: %s' % self.args.transformed)
 
         # load the input dataset
         print('Opening dataset %s...' % self.args.inp)

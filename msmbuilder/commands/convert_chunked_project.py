@@ -24,7 +24,6 @@ JSON records, each of which is of the form
     {"chunks": ["path/to/input-chunk"], "filename": "output-file"}
 """
 
-from __future__ import print_function, division, absolute_import
 
 import os
 import sys
@@ -38,10 +37,7 @@ from mdtraj.utils import timing
 from mdtraj.formats.registry import _FormatRegistry
 EXTENSIONS = _FormatRegistry.loaders.keys()
 
-try:
-    from scandir import walk as _walk
-except ImportError:
-    from os import walk as _walk
+from os import walk as _walk
 
 from ..cmdline import Command, argument, argument_group, FlagAction
 from ..dataset import _keynat

@@ -11,6 +11,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install ruff==0.17.6 mypy==2.4.1
+      - run: ruff check msmbuilder examples
+      - run: mypy
+
   wheels:
     name: Wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

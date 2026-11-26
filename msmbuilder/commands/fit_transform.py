@@ -7,19 +7,15 @@
 # Imports
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function, absolute_import
 
 import os
 import numpy as np
 
-from ..utils.progressbar import ProgressBar, Percentage, Bar, ETA
+from tqdm import tqdm
 from ..dataset import dataset, _guess_format
 from ..utils import verbosedump
 
-try:
-    from ..preprocessing import StandardScaler, RobustScaler
-except:
-    StandardScaler = RobustScaler = None
+from ..preprocessing import StandardScaler, RobustScaler
 
 from ..preprocessing import Butterworth, DoubleEWMA
 from ..decomposition import (tICA, SparseTICA, FastICA, FactorAnalysis,
@@ -58,9 +54,9 @@ class FitTransformCommand(NumpydocClassCommand):
         return dataset(self.inp, mode='r', verbose=False)
 
     def start(self):
-        if self.out is '' and self.transformed is '':
+        if self.out == '' and self.transformed == '':
             self.error('One of --out or --model should be specified')
-        if self.transformed is not '' and os.path.exists(self.transformed):
+        if self.transformed != '' and os.path.exists(self.transformed):
             self.error('File exists: %s' % self.transformed)
 
         inp_ds = self.load_dataset()
@@ -73,13 +69,10 @@ class FitTransformCommand(NumpydocClassCommand):
         print(self.instance.summarize())
         print('-' * 80)
 
-        if self.transformed is not '':
+        if self.transformed != '':
             out_ds = inp_ds.create_derived(self.transformed, fmt=self._transformed_fmt)
-            pbar = ProgressBar(
-                widgets=['Transforming ', Percentage(), Bar(), ETA()],
-                maxval=len(inp_ds)).start()
-
-            for key in pbar(inp_ds.keys()):
+            for key in tqdm(inp_ds.keys(), total=len(inp_ds), desc='Transforming',
+                            unit='traj'):
                 in_seq = inp_ds.get(key)
                 out_ds[key] = self.instance.partial_transform(in_seq)
             out_ds.close()
@@ -91,7 +84,7 @@ class FitTransformCommand(NumpydocClassCommand):
             print("  >>> from msmbuilder.dataset import dataset")
             print("  >>> ds = dataset('%s')\n" % self.transformed)
 
-        if self.out is not '':
+        if self.out != '':
             verbosedump(self.instance, self.out)
             print("To load this %s object interactively inside an IPython\n"
                   "shell or notebook, run: \n" % self.klass.__name__)

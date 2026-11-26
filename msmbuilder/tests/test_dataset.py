@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import, division
 
 import os
 import shutil
@@ -6,11 +5,7 @@ import tempfile
 import re
 import numpy as np
 from mdtraj.testing import get_fn
-# sklearn.externals.joblib is removed in scikit-learn v0.23
-try:
-    from joblib import Parallel, delayed
-except ImportError:
-    from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 from msmbuilder.dataset import dataset
 from .test_commands import tempdir

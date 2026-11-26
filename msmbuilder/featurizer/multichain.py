@@ -3,7 +3,6 @@
 # Copyright (c) 2016, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import warnings
 
@@ -11,7 +10,6 @@ import mdtraj as md
 from mdtraj.utils import ensure_type
 import numpy as np
 import itertools
-import warnings
 
 from msmbuilder import libdistance
 from . import Featurizer, zippy_maker, dict_maker, featurize_all
@@ -54,7 +52,7 @@ class LigandFeaturizer(Featurizer):
         if reference_frame is None:
             raise ValueError("Please specify a reference frame")
 
-        if reference_frame.n_frames is not 1:
+        if reference_frame.n_frames != 1:
             raise ValueError("Reference frame must be a single frame")
 
         if reference_frame.top.n_chains < 2:
@@ -158,7 +156,7 @@ class LigandContactFeaturizer(LigandFeaturizer):
     def __init__(self, protein_chain='auto', ligand_chain='auto',
                  reference_frame=None, contacts='all', 
                  scheme='closest-heavy', binding_pocket='all'):
-        super(LigandContactFeaturizer, self).__init__(
+        super().__init__(
                     protein_chain=protein_chain, ligand_chain=ligand_chain,
                     reference_frame=reference_frame)
         self.contacts = contacts
@@ -179,7 +177,7 @@ class LigandContactFeaturizer(LigandFeaturizer):
         # contacts we want to specify
         if isinstance(contacts, str):
             if contacts.lower() != 'all':
-                raise ValueError('({}) is not a valid contacts specifier'.format(contacts.lower()))
+                raise ValueError(f'({contacts.lower()}) is not a valid contacts specifier')
 
             self.residue_pairs = []
             for i in np.arange(self.reference_frame.top.chain(self.protein_chain).n_residues):
@@ -201,7 +199,7 @@ class LigandContactFeaturizer(LigandFeaturizer):
                 raise ValueError('contacts requests a residue that is not '\
                                  'in the permitted range')
 
-        if self.binding_pocket is not 'all':
+        if self.binding_pocket != 'all':
             ref_distances, _ = md.compute_contacts(self.reference_frame, 
                                      self.residue_pairs, self.scheme,
                                      ignore_nonprotein=False)
@@ -351,7 +349,7 @@ class BinaryLigandContactFeaturizer(LigandContactFeaturizer):
                  reference_frame=None, contacts='all', 
                  scheme='closest-heavy', binding_pocket='all',
                  cutoff=0.8):
-        super(BinaryLigandContactFeaturizer, self).__init__(
+        super().__init__(
                 protein_chain=protein_chain, ligand_chain=ligand_chain,
                 reference_frame=reference_frame, contacts=contacts,
                 scheme=scheme, binding_pocket=binding_pocket)
@@ -408,7 +406,7 @@ class LigandRMSDFeaturizer(LigandFeaturizer):
                  reference_frame=None, reference_traj=None,
                  align_by='protein', align_indices=None,
                  calculate_for='ligand', calculate_indices=None):
-        super(LigandRMSDFeaturizer, self).__init__(
+        super().__init__(
                     protein_chain=protein_chain, ligand_chain=ligand_chain,
                     reference_frame=reference_frame)
 
@@ -439,7 +437,7 @@ class LigandRMSDFeaturizer(LigandFeaturizer):
 
 
         if align_indices is not None:
-            if align_by is not 'custom':
+            if align_by != 'custom':
                 if not self._check_indices(self.align_by, align_indices):
                     raise ValueError("align_indices must be on the " \
                                      "align_by chain")
@@ -453,7 +451,7 @@ class LigandRMSDFeaturizer(LigandFeaturizer):
             self.align_indices = self._get_atom_range(self.align_by)
 
         if calculate_indices is not None:
-            if calculate_for is not 'custom':
+            if calculate_for != 'custom':
                 if not self._check_indices(self.calculate_for,
                                            calculate_indices):
                     raise ValueError("calculate_indices must be on the " \

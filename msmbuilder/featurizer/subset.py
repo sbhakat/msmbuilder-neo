@@ -65,7 +65,7 @@ class SubsetAtomPairs(BaseSubsetFeaturizer):
 
     """
     def __init__(self, possible_pair_indices, reference_traj, subset=None, periodic=False, exponent=1.0):
-        super(SubsetAtomPairs, self).__init__(reference_traj, subset=subset)
+        super().__init__(reference_traj, subset=subset)
         self.possible_pair_indices = possible_pair_indices
         self.periodic = periodic
         self.exponent = exponent
@@ -115,21 +115,21 @@ class SubsetTrigFeaturizer(BaseSubsetFeaturizer):
     def n_max(self):
         return len(self.which_atom_ind)
 
-class CosMixin(object):
+class CosMixin:
     def trig_function(self, dihedrals):
         return np.cos(dihedrals)
 
-class SinMixin(object):
+class SinMixin:
     def trig_function(self, dihedrals):
         return np.sin(dihedrals)
 
-class PhiMixin(object):
+class PhiMixin:
     @property
     def which_atom_ind(self):
         atom_indices, dih = md.geometry.dihedral.compute_phi(self.reference_traj)
         return atom_indices
 
-class PsiMixin(object):
+class PsiMixin:
     @property
     def which_atom_ind(self):
         atom_indices, dih = md.geometry.dihedral.compute_psi(self.reference_traj)
@@ -152,7 +152,7 @@ class SubsetSinPsiFeaturizer(SubsetTrigFeaturizer, SinMixin, PsiMixin):
     pass
 
 
-class DummyCV(object):
+class DummyCV:
     """A cross-validation object that returns identical training and test sets."""
     def __init__(self, n):
         self.n = n

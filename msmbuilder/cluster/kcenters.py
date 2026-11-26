@@ -7,7 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 import numpy as np
 from sklearn.utils import check_random_state
 from sklearn.base import ClusterMixin, TransformerMixin
@@ -131,7 +130,7 @@ class _KCenters(ClusterMixin, TransformerMixin):
 
 class KCenters(MultiSequenceClusterMixin, _KCenters, BaseEstimator):
     _allow_trajectory = True
-    __doc__ = _KCenters.__doc__[: _KCenters.__doc__.find('Attributes')] + \
+    __doc__ = (_KCenters.__doc__ or '')[:(_KCenters.__doc__ or '').find('Attributes')] + \
     '''
     Attributes
     ----------
@@ -169,14 +168,12 @@ class KCenters(MultiSequenceClusterMixin, _KCenters, BaseEstimator):
         return self
 
     def summarize(self):
-        return """KCenters clustering
+        return f"""KCenters clustering
 --------------------
-n_clusters : {n_clusters}
-metric     : {metric}
+n_clusters : {self.n_clusters}
+metric     : {self.metric}
 
-Inertia       : {inertia}
-Mean distance : {mean_distance}
-Max  distance : {max_distance}
-""".format(n_clusters=self.n_clusters, metric=self.metric,
-           inertia=self.inertia_, mean_distance=np.mean(np.concatenate(self.distances_)),
-           max_distance=np.max(np.concatenate(self.distances_)))
+Inertia       : {self.inertia_}
+Mean distance : {np.mean(np.concatenate(self.distances_))}
+Max  distance : {np.max(np.concatenate(self.distances_))}
+"""

@@ -1,4 +1,3 @@
-from __future__ import print_function, division, absolute_import
 
 import numpy as np
 from ..msm import MarkovStateModel
@@ -29,7 +28,7 @@ class PCCA(MarkovStateModel):
     def __init__(self, n_macrostates, pcca_tolerance=1e-5, **kwargs):
         self.n_macrostates = n_macrostates
         self.pcca_tolerance = pcca_tolerance
-        super(PCCA, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def fit(self, sequences, y=None):
         """Fit a PCCA lumping model using a sequence of cluster assignments.
@@ -45,7 +44,7 @@ class PCCA(MarkovStateModel):
         -------
         self
         """
-        super(PCCA, self).fit(sequences, y=y)
+        super().fit(sequences, y=y)
         self._do_lumping()
         return self
 
@@ -82,7 +81,7 @@ class PCCA(MarkovStateModel):
         self.microstate_mapping_ = microstate_mapping
 
     def partial_transform(self, sequence, mode='clip'):
-        trimmed_sequence = super(PCCA, self).partial_transform(sequence, mode)
+        trimmed_sequence = super().partial_transform(sequence, mode)
         if mode == 'clip':
             return [self.microstate_mapping_[seq] for seq in trimmed_sequence]
         elif mode == 'fill':

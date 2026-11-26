@@ -39,7 +39,7 @@ entry_item = (title_field | author_field | journal_field | year_field
               | Suppress(other_field))
 
 
-class BibEntry(object):
+class BibEntry:
     def __init__(self, type, cite_key, fields):
         self.type = type
         self.cite_key = cite_key

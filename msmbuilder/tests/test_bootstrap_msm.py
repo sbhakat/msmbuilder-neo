@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 from msmbuilder.msm import MarkovStateModel
 from msmbuilder.msm.validation import BootStrapMarkovStateModel
 from msmbuilder.msm.validation.bootstrapmsm import _mapped_populations as mapper
@@ -49,7 +48,7 @@ def test_score():
     assert bmsm.n_samples == np.array(bmsm.all_test_scores_).shape[0]
 
 
-class fakemsm(object):
+class fakemsm:
     def __init__(self, n_states, mapping, populations ):
         self.n_states_ = n_states
         self.mapping_ = mapping

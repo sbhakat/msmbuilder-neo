@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import scipy.optimize
+import scipy.special
 from msmbuilder.msm._ratematrix import ldirichlet_softmax
 from msmbuilder.msm._ratematrix import lexponential
 import pytest
@@ -80,11 +81,7 @@ def test_ldirchlet_softmax_pdf_gradient_2():
 
 def test_4():
     n = 4
-    # Importing comb from scipy.misc is deprecated in scipy 1.0.0.
-    try:
-        n_params = scipy.special.comb(n + 1, 2, exact=True)
-    except ImportError:
-        n_params = scipy.misc.comb(n + 1, 2, exact=True)
+    n_params = scipy.special.comb(n + 1, 2, exact=True)
     alpha = np.ones(n)
     beta = (np.arange(n_params - n) + 1).astype(float)
     counts = np.array([

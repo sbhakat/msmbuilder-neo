@@ -3,7 +3,6 @@
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 import numpy as np
 from sklearn.utils import check_random_state
 

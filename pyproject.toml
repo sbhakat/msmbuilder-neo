@@ -36,14 +36,15 @@ dependencies = [
     "numpy>=1.24",
     "scipy>=1.11",
     "scikit-learn>=1.3",
+    "joblib",
     "pandas>=1.5",
     "mdtraj>=1.10",
     "tables>=3.8",
     "fastcluster",
     "jinja2",
     "pyyaml",
+    "tqdm",
     "numpydoc",
-    "six",
 ]
 
 [project.optional-dependencies]
@@ -77,3 +78,52 @@ test-command = "python {project}/msmbuilder/tests/data_init.py && pytest --pyarg
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-include = ["*.pyx"]
+# Cython files are not valid Python; lint only .py files for now.
+extend-exclude = ["*.pyx", "docs", "msmbuilder/project_templates"]
+
+[tool.ruff.lint]
+# Start narrow: real errors (pyflakes, syntax) and Python 3 modernisation.
+# Style rules can be added once the codebase is formatted.
+select = ["E9", "F", "UP", "B", "W605"]
+ignore = [
+    "B006",   # mutable default arguments: review case by case later
+    "B008",   # function calls in defaults
+    "B028",   # warnings without stacklevel
+    "B905",   # zip() without strict=
+    "UP031",  # %-formatting -> f-strings: cosmetic, large diff
+    "UP032",  # .format() -> f-strings: cosmetic, large diff
+    "F403",   # star imports in __init__ files are intentional
+    "F405",
+    # Follow-ups: clean these up module by module, then remove them here.
+    "F401",   # unused imports (some are public re-exports)
+    "F841",   # unused local variables
+    "B007",   # unused loop variables
+    "B904",   # raise ... from err inside except
+    "B027",   # empty method in abstract base class
+]
+
+[tool.ruff.lint.per-file-ignores]
+"msmbuilder/tests/*" = ["B011", "B015", "B018"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["msmbuilder"]
+exclude = ["msmbuilder/tests/", "msmbuilder/project_templates/"]
+# The codebase has no type hints yet. Start lenient so mypy only reports
+# definite errors, then tighten per module as annotations are added.
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = false
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# Command classes override base-class attributes such as `description` (a
+# method on the base class) with plain strings; cmdline.App checks callable()
+# at runtime. That dynamic pattern is intentional, so skip this check here.
+module = ["msmbuilder.commands.*"]
+disable_error_code = ["assignment"]

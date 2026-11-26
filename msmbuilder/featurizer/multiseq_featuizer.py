@@ -1,7 +1,6 @@
 # Author: Muneeb Sultan <msultan@stanford.edu>
 # Copyright (c) 2016, Stanford University and the Authors
 # All rights reserved.
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import itertools
 from .featurizer import Featurizer, ContactFeaturizer
@@ -57,7 +56,7 @@ class CommonContactFeaturizer(Featurizer):
     soft_min : bool, default=False
         If soft_min is true, we will use a diffrentiable version of
         the scheme. The exact expression used
-         is d = \frac{\beta}{log\sum_i{exp(\frac{\beta}{d_i}})} where
+         is d = \frac{\beta}{log\\sum_i{exp(\frac{\beta}{d_i}})} where
          beta is user parameter which defaults to 20nm. The expression
          we use is copied from the plumed mindist calculator.
          http://plumed.github.io/doc-v2.0/user-doc/html/mindist.html
@@ -86,7 +85,7 @@ class CommonContactFeaturizer(Featurizer):
         self.protein_list = list(self.alignment.keys())
         self.same_residue = same_residue
         self.contacts = contacts
-        if contacts is 'all':
+        if contacts == 'all':
             # use the max length(probably a horrible idea)
             max_seq_len = max([len(self.alignment[i])
                                for i in self.alignment.keys()])

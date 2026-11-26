@@ -7,14 +7,13 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 import numpy as np
 
 import mdtraj as md
 from ..utils import check_iter_of_sequences
 
 
-class MultiSequenceClusterMixin(object):
+class MultiSequenceClusterMixin:
 
     # The API for the scikit-learn Cluster object is, in fit(), that
     # they take a single 2D array of shape (n_data_points, n_features).
@@ -45,7 +44,7 @@ class MultiSequenceClusterMixin(object):
         self
         """
         check_iter_of_sequences(sequences, allow_trajectory=self._allow_trajectory)
-        super(MultiSequenceClusterMixin, self).fit(self._concat(sequences))
+        super().fit(self._concat(sequences))
 
         if hasattr(self, 'labels_'):
             self.labels_ = self._split(self.labels_)
@@ -132,7 +131,7 @@ class MultiSequenceClusterMixin(object):
         """
         if isinstance(X, md.Trajectory):
             X.center_coordinates()
-        return super(MultiSequenceClusterMixin, self).predict(X)
+        return super().predict(X)
 
     def fit_predict(self, sequences, y=None):
         """Performs clustering on X and returns cluster labels.
@@ -149,9 +148,9 @@ class MultiSequenceClusterMixin(object):
         Y : list of ndarray, each of shape [sequence_length, ]
             Cluster labels
         """
-        if hasattr(super(MultiSequenceClusterMixin, self), 'fit_predict'):
+        if hasattr(super(), 'fit_predict'):
             check_iter_of_sequences(sequences, allow_trajectory=self._allow_trajectory)
-            labels = super(MultiSequenceClusterMixin, self).fit_predict(sequences)
+            labels = super().fit_predict(sequences)
         else:
             self.fit(sequences)
             labels = self.predict(sequences)
@@ -173,7 +172,7 @@ class MultiSequenceClusterMixin(object):
         return self.fit_predict(sequences, y)
     
 # Add sample_weight for methods
-class MultiSequenceClusterMixin_update(object):
+class MultiSequenceClusterMixin_update:
 
     # The API for the scikit-learn Cluster object is, in fit(), that
     # they take a single 2D array of shape (n_data_points, n_features).
@@ -202,7 +201,7 @@ class MultiSequenceClusterMixin_update(object):
         self
         """
         check_iter_of_sequences(sequences, allow_trajectory=self._allow_trajectory)
-        super(MultiSequenceClusterMixin_update, self).fit(self._concat(sequences))
+        super().fit(self._concat(sequences))
 
         if hasattr(self, 'labels_'):
             self.labels_ = self._split(self.labels_)
@@ -283,7 +282,7 @@ class MultiSequenceClusterMixin_update(object):
         """
         if isinstance(X, md.Trajectory):
             X.center_coordinates()
-        return super(MultiSequenceClusterMixin_update, self).predict(X)
+        return super().predict(X)
 
     def fit_predict(self, sequences, y=None, sample_weight=None):
         """Performs clustering on X and returns cluster labels.
@@ -298,9 +297,9 @@ class MultiSequenceClusterMixin_update(object):
         Y : list of ndarray, each of shape [sequence_length, ]
             Cluster labels
         """
-        if hasattr(super(MultiSequenceClusterMixin_update, self), 'fit_predict'):
+        if hasattr(super(), 'fit_predict'):
             check_iter_of_sequences(sequences, allow_trajectory=self._allow_trajectory)
-            labels = super(MultiSequenceClusterMixin_update, self).fit_predict(sequences)
+            labels = super().fit_predict(sequences)
         else:
             self.fit(sequences)
             labels = self.predict(sequences)

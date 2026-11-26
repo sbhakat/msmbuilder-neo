@@ -34,7 +34,6 @@ References
        pathways from short off-equilibrium simulations." PNAS 106.45 (2009):
        19011-19016.
 """
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import copy
 

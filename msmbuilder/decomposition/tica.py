@@ -8,7 +8,6 @@
 # Imports
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import scipy.linalg
 import warnings
@@ -63,7 +62,7 @@ class tICA(BaseEstimator, TransformerMixin):
         give a set of "directions" through configuration space along
         which the system relaxes towards equilibrium. Each eigenvector
         is associated with characteritic timescale
-        :math:`- \frac{lag_time}{ln \lambda_i}, where :math:`lambda_i` is
+        :math:`- \frac{lag_time}{ln \\lambda_i}, where :math:`lambda_i` is
         the corresponding eigenvector. See [2] for more information.
     means_ : array, shape (n_features,)
         The mean of the data along each feature
@@ -470,23 +469,21 @@ class tICA(BaseEstimator, TransformerMixin):
     def summarize(self):
         """Some summary information."""
         # force shrinkage to be calculated
-        self.covariance_
+        self.covariance_  # noqa: B018
 
-        return """time-structure based Independent Components Analysis (tICA)
+        return f"""time-structure based Independent Components Analysis (tICA)
 -----------------------------------------------------------
-n_components        : {n_components}
-shrinkage           : {shrinkage}
-lag_time            : {lag_time}
-kinetic_mapping     : {kinetic_mapping}
+n_components        : {self.n_components}
+shrinkage           : {self.shrinkage_}
+lag_time            : {self.lag_time}
+kinetic_mapping     : {self.kinetic_mapping}
 
 Top 5 timescales :
-{timescales}
+{self.timescales_[:5]}
 
 Top 5 eigenvalues :
-{eigenvalues}
-""".format(n_components=self.n_components, lag_time=self.lag_time,
-           shrinkage=self.shrinkage_, kinetic_mapping=self.kinetic_mapping,
-           timescales=self.timescales_[:5], eigenvalues=self.eigenvalues_[:5])
+{self.eigenvalues_[:5]}
+"""
 
 
 def rao_blackwell_ledoit_wolf(S, n):

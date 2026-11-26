@@ -7,7 +7,6 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 import numbers
 import numpy as np
 from sklearn.base import ClusterMixin, TransformerMixin

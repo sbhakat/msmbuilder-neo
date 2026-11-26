@@ -7,14 +7,13 @@
 # Imports
 #-----------------------------------------------------------------------------
 
-from __future__ import absolute_import, print_function, division
 
 from operator import itemgetter
 import numpy as np
 from sklearn.base import ClusterMixin, TransformerMixin
 
 from . import MultiSequenceClusterMixin
-from . import _kmedoids
+from . import _kmedoids  # type: ignore[attr-defined]  # compiled extension
 from .. import libdistance
 from ..base import BaseEstimator
 
@@ -130,7 +129,7 @@ class _KMedoids(ClusterMixin, TransformerMixin):
 
 class KMedoids(MultiSequenceClusterMixin, _KMedoids, BaseEstimator):
     _allow_trajectory = True
-    __doc__ = _KMedoids.__doc__[: _KMedoids.__doc__.find('Attributes')] + \
+    __doc__ = (_KMedoids.__doc__ or '')[:(_KMedoids.__doc__ or '').find('Attributes')] + \
     '''
     Attributes
     ----------

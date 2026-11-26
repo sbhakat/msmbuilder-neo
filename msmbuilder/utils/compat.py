@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import, division
 import os
 import functools
 import warnings
@@ -32,7 +31,7 @@ class ExperimentalWarning(Warning):
         If a message is passed in msg, it will be printed instead of the
         default message.
         """
-        super(ExperimentalWarning, self).__init__()
+        super().__init__()
         self.obj = obj
         self.msg = msg
 

@@ -6,7 +6,6 @@
 # -----------------------------------------------------------------------------
 # Imports
 # -----------------------------------------------------------------------------
-from __future__ import print_function, absolute_import, division
 
 from glob import glob
 from os.path import basename
@@ -51,7 +50,7 @@ class FsPeptide(_MDDataset):
     def get_cached(self):
         try:
             top = md.load(join(self.data_dir, 'fs-peptide.pdb'))
-        except IOError:
+        except OSError:
             top = md.load(join(self.data_dir, 'fs_peptide.pdb'))
         trajectories = []
         for fn in sorted(glob(join(self.data_dir, 'trajectory*.xtc'))):
@@ -87,11 +86,11 @@ class MinimalFsPeptide(_MDDataset):
     def get_cached(self):
         try:
             top = md.load(join(self.data_dir, 'fs-peptide.pdb'))
-        except IOError:
+        except OSError:
             top = md.load(join(self.data_dir, 'fs_peptide.pdb'))
         trajectories = [
             md.load(fn, top=top, stride=200)
-            for fn in sorted(glob("{}/trajectory*.xtc".format(self.data_dir)))
+            for fn in sorted(glob(f"{self.data_dir}/trajectory*.xtc"))
             ]
         return Bunch(trajectories=trajectories, DESCR=self.description())
 

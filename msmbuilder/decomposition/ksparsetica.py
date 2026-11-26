@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import
-from six import PY2
 import numpy as np
 from msmbuilder.decomposition.tica import tICA
 from msmbuilder.decomposition._speigh import scdeflate
@@ -122,7 +120,7 @@ class KSparseTICA(tICA):
     """
 
     def __init__(self, n_components=None, lag_time=1, k=5, shrinkage=None, kinetic_mapping=True):
-        super(KSparseTICA, self).__init__(n_components, lag_time=lag_time,
+        super().__init__(n_components, lag_time=lag_time,
                                           kinetic_mapping=kinetic_mapping, shrinkage=shrinkage)
         self.k = k
 
@@ -179,7 +177,7 @@ class KSparseTICA(tICA):
 
         # sort
         argsorted = np.argsort(eig_vals)[::-1]
-        self._eigenvalues_ = np.zeros((self.n_components))
+        self._eigenvalues_ = np.zeros(self.n_components)
         self._eigenvectors_ = np.zeros((self.n_features, self.n_components))
 
         for i in range(self.n_components):
@@ -193,20 +191,17 @@ class KSparseTICA(tICA):
         nonzeros = np.sum(np.abs(self.eigenvectors_) > 0, axis=0)
         active = '[%s]' % ', '.join(['%d/%d' % (n, self.n_features) for n in nonzeros[:n_timescales_to_report]])
 
-        return """K-sparse time-structure Independent Components Analysis (tICA)
+        return f"""K-sparse time-structure Independent Components Analysis (tICA)
 ------------------------------------------------------------------
-n_components        : {n_components}
-shrinkage           : {shrinkage}
-lag_time            : {lag_time}
-kinetic_mapping     : {kinetic_mapping}
-n_features          : {n_features}
+n_components        : {self.n_components}
+shrinkage           : {self.shrinkage_}
+lag_time            : {self.lag_time}
+kinetic_mapping     : {self.kinetic_mapping}
+n_features          : {self.n_features}
 Top {n_timescales_to_report} timescales :
-{timescales}
+{self.timescales_[:n_timescales_to_report]}
 Top {n_timescales_to_report} eigenvalues :
-{eigenvalues}
+{self.eigenvalues_[:n_timescales_to_report]}
 Number of active degrees of freedom:
 {active}
-""".format(n_components=self.n_components, shrinkage=self.shrinkage_, lag_time=self.lag_time,
-           kinetic_mapping=self.kinetic_mapping,
-           timescales=self.timescales_[:n_timescales_to_report], eigenvalues=self.eigenvalues_[:n_timescales_to_report],
-           n_features=self.n_features, active=active, n_timescales_to_report=n_timescales_to_report)
+"""

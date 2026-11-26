@@ -12,7 +12,6 @@ The format of the index file is flat text, with each line containing either
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 import os
 import itertools
 

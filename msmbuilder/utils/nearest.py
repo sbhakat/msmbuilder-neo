@@ -3,14 +3,13 @@
 # Copyright (c) 2015, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import absolute_import, print_function, division
 from scipy.spatial import KDTree as sp_KDTree
 import numpy as np
 
 from . import check_iter_of_sequences
 
 
-class KDTree(object):
+class KDTree:
     """kd-tree for quick nearest-neighbor lookup
 
     This class provides an index into a set of k-dimensional points which

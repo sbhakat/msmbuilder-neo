@@ -3,7 +3,6 @@
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 import time
 import numpy as np
 
@@ -137,8 +136,8 @@ class BayesianContinuousTimeMSM(BaseEstimator, _MappingTransformMixin):
 
         correlation_times = integrated_autocorr2(self.all_timescales_[:, :5])
 
-        fmt = lambda x: ', '.join(['{:.2f}'.format(xx) for xx in x])
-        fmt_d = lambda x: ', '.join(['{:d}'.format(xx) for xx in x.astype(int)])
+        fmt = lambda x: ', '.join([f'{xx:.2f}' for xx in x])
+        fmt_d = lambda x: ', '.join([f'{xx:d}' for xx in x.astype(int)])
 
         return """Bayesian Markov State Model
 ---------------------------

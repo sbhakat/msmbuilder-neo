@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 
 import glob
 import itertools
@@ -65,7 +64,7 @@ def teardown_module():
     shutil.rmtree(DATADIR)
 
 
-class tempdir(object):
+class tempdir:
     def __enter__(self):
         self._curdir = os.path.abspath(os.curdir)
         self._tempdir = tempfile.mkdtemp()
@@ -144,11 +143,11 @@ def test_superpose_featurizer():
         shell('msmb AtomIndices -o all.txt --all -a -p '
               '%s/alanine_dipeptide/ala2.pdb' % get_data_home()),
         shell("msmb SuperposeFeaturizer "
-              "--trjs '{data_home}/alanine_dipeptide/*.dcd'"
+              f"--trjs '{get_data_home()}/alanine_dipeptide/*.dcd'"
               " --transformed distances --atom_indices all.txt"
-              " --reference_traj {data_home}/alanine_dipeptide/ala2.pdb"
-              " --top {data_home}/alanine_dipeptide/ala2.pdb"
-              .format(data_home=get_data_home()))
+              f" --reference_traj {get_data_home()}/alanine_dipeptide/ala2.pdb"
+              f" --top {get_data_home()}/alanine_dipeptide/ala2.pdb"
+              )
         ds = dataset('distances')
         assert len(ds) == 10
         assert ds[0].shape[1] == len(np.loadtxt('all.txt'))
@@ -161,11 +160,11 @@ def test_superpose_featurizer_reftop():
         shell('msmb AtomIndices -o all.txt --all -a -p '
               '%s/alanine_dipeptide/ala2.pdb' % get_data_home()),
         shell("msmb SuperposeFeaturizer "
-              "--trjs '{data_home}/alanine_dipeptide/*.dcd'"
+              f"--trjs '{get_data_home()}/alanine_dipeptide/*.dcd'"
               " --transformed distances --atom_indices all.txt"
-              " --reference_traj {data_home}/alanine_dipeptide/trajectory-0.dcd"
-              " --top {data_home}/alanine_dipeptide/ala2.pdb"
-              .format(data_home=get_data_home()))
+              f" --reference_traj {get_data_home()}/alanine_dipeptide/trajectory-0.dcd"
+              f" --top {get_data_home()}/alanine_dipeptide/ala2.pdb"
+              )
         ds = dataset('distances')
         assert len(ds) == 10
         assert ds[0].shape[1] == len(np.loadtxt('all.txt'))
@@ -177,10 +176,10 @@ def test_atom_pairs_featurizer():
         shell('msmb AtomIndices -o all.txt --all -d -p '
               '%s/alanine_dipeptide/ala2.pdb' % get_data_home()),
         shell("msmb AtomPairsFeaturizer "
-              "--trjs '{data_home}/alanine_dipeptide/*.dcd'"
+              f"--trjs '{get_data_home()}/alanine_dipeptide/*.dcd'"
               " --transformed pairs --pair_indices all.txt"
-              " --top {data_home}/alanine_dipeptide/ala2.pdb"
-              .format(data_home=get_data_home()))
+              f" --top {get_data_home()}/alanine_dipeptide/ala2.pdb"
+              )
         ds = dataset('pairs')
         assert len(ds) == 10
         assert ds[0].shape[1] == len(np.loadtxt('all.txt') ** 2)
@@ -189,30 +188,30 @@ def test_atom_pairs_featurizer():
 
 def test_transform_command_1():
     with tempdir():
-        shell("msmb KCenters -i {data_home}/alanine_dipeptide/*.dcd "
-              "-o model.pkl --top {data_home}/alanine_dipeptide/ala2.pdb "
-              "--metric rmsd".format(data_home=get_data_home()))
-        shell("msmb TransformDataset -i {data_home}/alanine_dipeptide/*.dcd "
+        shell(f"msmb KCenters -i {get_data_home()}/alanine_dipeptide/*.dcd "
+              f"-o model.pkl --top {get_data_home()}/alanine_dipeptide/ala2.pdb "
+              "--metric rmsd")
+        shell(f"msmb TransformDataset -i {get_data_home()}/alanine_dipeptide/*.dcd "
               "-m model.pkl -t transformed.h5 --top "
-              "{data_home}/alanine_dipeptide/ala2.pdb"
-              .format(data_home=get_data_home()))
+              f"{get_data_home()}/alanine_dipeptide/ala2.pdb"
+              )
         try:
             eq(dataset('transformed.h5')[0], load('model.pkl').labels_[0])
         except:
             print('Arrays not eq')
 
     with tempdir():
-        shell("msmb KCenters -i {data_home}/alanine_dipeptide/trajectory-0.dcd "
-              "-o model.pkl --top {data_home}/alanine_dipeptide/ala2.pdb "
-              "--metric rmsd".format(data_home=get_data_home()))
+        shell(f"msmb KCenters -i {get_data_home()}/alanine_dipeptide/trajectory-0.dcd "
+              f"-o model.pkl --top {get_data_home()}/alanine_dipeptide/ala2.pdb "
+              "--metric rmsd")
 
 
 def test_transform_command_2():
     with tempdir():
-        shell("msmb KCenters -i {data_home}/alanine_dipeptide/trajectory-0.dcd "
-              "-o model.pkl --top {data_home}/alanine_dipeptide/ala2.pdb "
+        shell(f"msmb KCenters -i {get_data_home()}/alanine_dipeptide/trajectory-0.dcd "
+              f"-o model.pkl --top {get_data_home()}/alanine_dipeptide/ala2.pdb "
               "--metric rmsd "
-              "--stride 2".format(data_home=get_data_home()))
+              "--stride 2")
 
 
 def test_help():
@@ -223,8 +222,8 @@ def test_convert_chunked_project_1():
     with tempdir():
         root = os.path.join(get_data_home(), 'alanine_dipeptide')
         assert os.path.exists(root)
-        cmd = ("msmb ConvertChunkedProject out {root} --pattern *.dcd "
-               "-t {root}/ala2.pdb".format(root=root))
+        cmd = (f"msmb ConvertChunkedProject out {root} --pattern *.dcd "
+               f"-t {root}/ala2.pdb")
         shell(cmd)
         assert set(os.listdir('out')) == {'traj-00000000.dcd',
                                           'trajectories.jsonl'}

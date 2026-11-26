@@ -32,7 +32,6 @@ TODO
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 
-from __future__ import absolute_import, division
 
 import math
 import multiprocessing
@@ -300,8 +299,8 @@ Timescales:
                              n_chains=self.n_chains, n_timescales=self.n_timescales,
                              sampler=self.sampler,
                              n_states=self.n_states_,
-                             mean_ts=', '.join(['{:.2f}'.format(t) for t in self.all_timescales_.mean(0)]),
-                             std_ts=', '.join(['{:.2f}'.format(t) for t in self.all_timescales_.std(0)]))
+                             mean_ts=', '.join([f'{t:.2f}' for t in self.all_timescales_.mean(0)]),
+                             std_ts=', '.join([f'{t:.2f}' for t in self.all_timescales_.std(0)]))
 
     @property
     def all_timescales_(self):

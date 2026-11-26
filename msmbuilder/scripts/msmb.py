@@ -1,5 +1,4 @@
 """Statistical models for biomolecular dynamics"""
-from __future__ import print_function, absolute_import, division
 import sys
 from ..cmdline import App
 from ..commands import *

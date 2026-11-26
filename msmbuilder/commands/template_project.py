@@ -6,7 +6,6 @@
 # Copyright (c) 2016, Stanford University
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 
 import os
 import stat

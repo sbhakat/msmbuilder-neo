@@ -55,7 +55,7 @@ def test_numbered_runs_with_prefix():
         # The files don't actually exist. We'll ignore those warnings
         warnings.simplefilter("ignore", ParseWarning)
         nr = NumberedRunsParser(traj_fmt="traj{run}.xtc")
-        meta = gather_metadata(["/test/directory/tree/{}".format(fn)
+        meta = gather_metadata([f"/test/directory/tree/{fn}"
                                 for fn in filenames1], nr)
     np.testing.assert_array_equal(meta.index, [0, 1, 2])
 
@@ -90,7 +90,7 @@ def test_hierarchy():
         ('PROJ9704', 'RUN1', 'CLONE11.xtc'),
         ('PROJ9704.new', 'RUN1', 'CLONE12.xtc'),
     ]):
-        assert x == y, "{} != {}".format(x, y)
+        assert x == y, f"{x} != {y}"
 
     assert meta.index.names == ('i0', 'i1', 'i2'), meta.index.names
     assert len(meta.loc['PROJ9704']) == 4
@@ -110,7 +110,7 @@ def test_hierarchy_with_names():
         ('PROJ9704', 'RUN1', 'CLONE11.xtc'),
         ('PROJ9704.new', 'RUN1', 'CLONE12.xtc'),
     ]):
-        assert x == y, "{} != {}".format(x, y)
+        assert x == y, f"{x} != {y}"
 
     assert meta.index.names == ('proj', 'run', 'clone'), meta.index.names
     assert len(meta.loc['PROJ9704']) == 4
@@ -130,7 +130,7 @@ def test_hierarchy_ignore_fext():
         ('PROJ9704', 'RUN1', 'CLONE11'),
         ('PROJ9704', 'RUN1', 'CLONE12'),
     ]):
-        assert x == y, "{} != {}".format(x, y)
+        assert x == y, f"{x} != {y}"
 
     assert meta.index.names == ('proj', 'run', 'clone'), meta.index.names
     assert len(meta.loc['PROJ9704']) == 5

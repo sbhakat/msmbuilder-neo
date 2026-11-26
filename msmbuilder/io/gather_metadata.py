@@ -17,7 +17,7 @@ class ParseWarning(UserWarning):
     pass
 
 
-class _Parser(object):
+class _Parser:
     def parse_fn(self, fn):
         raise NotImplementedError
 
@@ -80,8 +80,8 @@ class GenericParser(_Parser):
             with md.open(fn) as f:
                 meta['nframes'] = len(f)
         except Exception as e:
-            warnings.warn("Could not determine the number of frames for {}: {}"
-                          .format(fn, e), ParseWarning)
+            warnings.warn(f"Could not determine the number of frames for {fn}: {e}"
+                          , ParseWarning)
 
         if self.step_ps is not None:
             meta['step_ps'] = self.step_ps
@@ -89,8 +89,8 @@ class GenericParser(_Parser):
         # Get indices
         ma = self.fn_re.search(fn)
         if ma is None:
-            raise ValueError("Filename {} did not match the "
-                             "regular rexpression {}".format(fn, self.fn_re))
+            raise ValueError(f"Filename {fn} did not match the "
+                             f"regular rexpression {self.fn_re}")
         meta.update({gn: transform(ma.group(gi))
                      for gn, transform, gi
                      in zip(self.group_names, self.group_transforms,
@@ -120,14 +120,14 @@ class NumberedRunsParser(GenericParser):
         try:
             traj_fmt.format(run=0)
         except:
-            raise ValueError("Invalid format string {}".format(traj_fmt))
+            raise ValueError(f"Invalid format string {traj_fmt}")
         # Build a regex from format string
         s1, s2 = re.split(r'\{run\}', traj_fmt)
         capture_group = r'(\d+)'
         fn_re = re.escape(s1) + capture_group + re.escape(s2)
 
         # Call generic
-        super(NumberedRunsParser, self).__init__(
+        super().__init__(
             fn_re=fn_re,
             group_names=['run'],
             group_transforms=[int],
@@ -170,7 +170,7 @@ class HierarchyParser(GenericParser):
             raise ValueError("Please specify levels or n_levels, but not both")
 
         if levels is None:
-            levels = ["i{i}".format(i=i) for i in range(n_levels)]
+            levels = [f"i{i}" for i in range(n_levels)]
 
         if ignore_fext:
             # regex notes:
@@ -181,7 +181,7 @@ class HierarchyParser(GenericParser):
 
         fn_re = r'\/'.join(subre for _ in levels)
 
-        super(HierarchyParser, self).__init__(
+        super().__init__(
             fn_re=fn_re,
             group_names=levels,
             group_transforms=[str for _ in levels],

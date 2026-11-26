@@ -3,15 +3,10 @@
 # Copyright (c) 2016, Stanford University and the Authors
 # All rights reserved.
 
-from __future__ import print_function, division, absolute_import
 import numpy as np
 import collections
 
-try:
-    from collections import Sequence
-except ImportError:
-    # python3.10
-    from collections.abc import Sequence
+from collections.abc import Sequence
 
 from ..base import BaseEstimator
 from ..utils import check_iter_of_sequences
@@ -31,28 +26,6 @@ class MultiSequencePreprocessingMixin(BaseEstimator):
     # then splits the labels_ back into the sequenced form.
     #
     # This code is copied and modified from cluster.MultiSequenceClusterMixin
-
-    def fit(self, sequences, y=None):
-        """Fit Preprocessing to X.
-
-        Parameters
-        ----------
-        sequences : list of array-like, each of shape [sequence_length, n_features]
-            A list of multivariate timeseries. Each sequence may have
-            a different length, but they all must have the same number
-            of features.
-        y : None
-            Ignored
-
-        Returns
-        -------
-        self
-        """
-        check_iter_of_sequences(sequences)
-        s = super(MultiSequencePreprocessingMixin, self)
-        s.fit(self._concat(sequences))
-
-        return self
 
     def _concat(self, sequences):
         self.__lengths = [len(s) for s in sequences]
@@ -129,7 +102,7 @@ class MultiSequencePreprocessingMixin(BaseEstimator):
         -------
         out : array like, shape (n_samples, n_features)
         """
-        s = super(MultiSequencePreprocessingMixin, self)
+        s = super()
         return s.transform(sequence)
 
     def partial_fit(self, sequence, y=None):
@@ -144,7 +117,7 @@ class MultiSequencePreprocessingMixin(BaseEstimator):
         -------
         self
         """
-        s = super(MultiSequencePreprocessingMixin, self)
+        s = super()
         if hasattr(s, 'fit'):
             return s.fit(sequence)
         return self

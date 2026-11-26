@@ -1,18 +1,10 @@
-from __future__ import print_function, division, absolute_import
 from sklearn import clone
 
 # for compatibility with scikit-learn>=0.20
 # same as from sklearn.model_selection._search import ParameterGrid
-try:
-    from sklearn.model_selection import ParameterGrid
-except ImportError:
-    from sklearn.grid_search import ParameterGrid
+from sklearn.model_selection import ParameterGrid
 
-# sklearn.externals.joblib is removed in scikit-learn v0.23
-try:
-    from joblib import Parallel, delayed
-except ImportError:
-    from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 __all__ = ['param_sweep']
 
@@ -30,9 +22,9 @@ def param_sweep(model, sequences, param_grid, n_jobs=1, verbose=0):
         sequence should be a 1D iterable of state
         labels. Labels can be integers, strings, or
         other orderable objects.
-    param_grid : dict or sklearn.grid_search.ParameterGrid
+    param_grid : dict or sklearn.model_selection.ParameterGrid
         Parameter grid to specify models to fit. See
-        sklearn.grid_search.ParameterGrid for an explanation
+        sklearn.model_selection.ParameterGrid for an explanation
     n_jobs : int, optional
         Number of jobs to run in parallel using joblib.Parallel
 

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from .base import get_data_home, clear_data_home, has_msmb_data
 from .brownian1d import DoubleWell, QuadWell
 from .brownian1d import load_doublewell, load_quadwell

@@ -1,6 +1,7 @@
-from __future__ import print_function
 
 import mdtraj as md
+import sys
+
 import numpy as np
 from mdtraj.testing import eq
 import pytest

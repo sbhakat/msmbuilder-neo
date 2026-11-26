@@ -21,7 +21,6 @@ References
 # Imports
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
 from os.path import splitext
 import sys
 import json
@@ -118,5 +117,5 @@ class ImpliedTimescales(Command):
         elif self.args.fmt == 'excel':
             df.to_excel(outfile)
         else:
-            raise RuntimeError('unknown fmt: %s' % fmt)
+            raise RuntimeError('unknown fmt: %s' % self.args.fmt)
         print('All done!')

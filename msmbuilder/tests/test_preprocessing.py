@@ -42,11 +42,7 @@ try:
 except:
     HAVE_SS = False
 
-# scikit-learn: New in version 0.20: SimpleImputer replaces the previous sklearn.preprocessing.Imputer estimator which is now removed.
-try: 
-    from sklearn.impute import SimpleImputer as ImputerR
-except ImportError:
-    from sklearn.preprocessing import Imputer as ImputerR
+from sklearn.impute import SimpleImputer as ImputerR
 
 from sklearn.preprocessing import (Binarizer as BinarizerR,
                                    KernelCenterer as KernelCentererR,

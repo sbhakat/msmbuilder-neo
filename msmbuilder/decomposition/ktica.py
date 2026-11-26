@@ -7,7 +7,6 @@
 # Imports
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function, division, absolute_import
 
 import numpy as np
 
@@ -78,7 +77,7 @@ class KernelTICA(tICA):
         give a set of "directions" through configuration space along
         which the system relaxes towards equilibrium. Each eigenvector
         is associated with characteritic timescale
-        :math:`- \frac{lag_time}{ln \lambda_i}, where :math:`lambda_i` is
+        :math:`- \frac{lag_time}{ln \\lambda_i}, where :math:`lambda_i` is
         the corresponding eigenvector. See [2] for more information.
     means_ : array, shape (n_features,)
         The mean of the data along each feature
@@ -126,7 +125,7 @@ class KernelTICA(tICA):
                                   'coef0': self.coef0,
                                   'random_state': self.random_state
                                   }
-        super(KernelTICA, self).__init__(n_components=n_components,
+        super().__init__(n_components=n_components,
                                          lag_time=lag_time,
                                          shrinkage=shrinkage,
                                          kinetic_mapping=kinetic_mapping)
@@ -148,7 +147,7 @@ class KernelTICA(tICA):
                                           **self.kernel_params)
         ksequences = self._nystroem.fit_transform(sequences)
 
-        super(KernelTICA, self).fit(ksequences, y=y)
+        super().fit(ksequences, y=y)
 
     def partial_fit(self, X):
         if self.landmarks is None:
@@ -160,8 +159,8 @@ class KernelTICA(tICA):
 
         Y = self._nystroem.partial_transform(X)
 
-        super(KernelTICA, self).partial_fit(Y)
+        super().partial_fit(Y)
 
     def transform(self, sequences):
         ksequences = self._nystroem.transform(sequences)
-        return super(KernelTICA, self).transform(ksequences)
+        return super().transform(ksequences)
