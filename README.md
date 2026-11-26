@@ -20,8 +20,8 @@ git clone https://github.com/sbhakat/msmbuilder-neo.git
 python -m pip install ./msmbuilder-neo
 ```
 
-Prebuilt wheels for Linux, macOS and Windows are built by CI and will be
-published to PyPI once the first release is cut.
+Prebuilt wheels for Linux and macOS are built by CI and will be published to
+PyPI once the first release is cut. Windows is not supported for now.
 
 Building from source needs a C/C++ compiler. OpenMP is used when found and
 skipped otherwise (pass `-Csetup-args=-Dopenmp=disabled` to turn it off). On

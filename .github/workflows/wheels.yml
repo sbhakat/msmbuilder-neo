@@ -24,7 +24,6 @@ jobs:
             deployment_target: "13.0"
           - os: macos-14             # macOS Apple Silicon
             deployment_target: "14.0"
-          - os: windows-latest       # Windows x86_64
     steps:
       - uses: actions/checkout@v4
         with:

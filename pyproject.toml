@@ -22,7 +22,6 @@ classifiers = [
     "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
-    "Operating System :: Microsoft :: Windows",
     "Programming Language :: C++",
     "Programming Language :: Cython",
     "Programming Language :: Python :: 3",
@@ -68,16 +67,12 @@ addopts = "--import-mode=importlib"
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-*"
-skip = "*-musllinux_* *-win32 *-manylinux_i686"
+skip = "*-musllinux_* *-win* *-manylinux_i686"
 # Run the full suite on the oldest and newest Python only; it downloads the
 # example datasets and takes several minutes per wheel.
 test-skip = "cp311-* cp312-*"
 test-extras = ["test"]
 test-command = "python {project}/msmbuilder/tests/data_init.py && pytest --pyargs msmbuilder.tests -x -q -n auto -p no:cacheprovider"
-
-[tool.cibuildwheel.windows]
-# Meson needs the MSVC environment activated to find the compiler.
-config-settings = { setup-args = "--vsenv" }
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
