@@ -66,6 +66,11 @@ quiet_cpp = cpp.get_supported_arguments('-Wno-unused-function', '-Wno-unreachabl
 add_project_arguments(quiet_c, language: 'c')
 add_project_arguments(quiet_cpp, language: 'cpp')
 
+# Falling off the end of a non-void function is undefined behaviour; GCC turns
+# it into a trap. That is what crashed k-medoids on Linux, so make it an error.
+add_project_arguments(cc.get_supported_arguments('-Werror=return-type'), language: 'c')
+add_project_arguments(cpp.get_supported_arguments('-Werror=return-type'), language: 'cpp')
+
 cython_args = ['-3', '--fast-fail']
 src_inc = include_directories('msmbuilder/src')
 

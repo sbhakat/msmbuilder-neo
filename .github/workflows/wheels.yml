@@ -20,10 +20,10 @@ jobs:
         include:
           - os: ubuntu-latest        # Linux x86_64
           - os: ubuntu-24.04-arm     # Linux aarch64
-          - os: macos-13             # macOS Intel
-            deployment_target: "13.0"
-          - os: macos-14             # macOS Apple Silicon
-            deployment_target: "14.0"
+          - os: macos-15-intel       # macOS Intel
+            deployment_target: "15.0"
+          - os: macos-15             # macOS Apple Silicon
+            deployment_target: "15.0"
     steps:
       - uses: actions/checkout@v4
         with:

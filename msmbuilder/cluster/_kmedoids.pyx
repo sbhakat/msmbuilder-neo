@@ -15,7 +15,7 @@ from cpython.ref cimport PyObject
 cdef extern from "src/kmedoids.h":
     void _kmedoids "kmedoids" (npy_intp nclusters, npy_intp nelements,
         double* distmatrix, npy_intp npass, npy_intp clusterid[],
-        PyObject* random, double* error, npy_intp* ifound)
+        PyObject* random, double* error, npy_intp* ifound) except *
     map[npy_intp, npy_intp] _contigify_ids "contigify_ids" (
         npy_intp* ids, npy_intp length)
 
