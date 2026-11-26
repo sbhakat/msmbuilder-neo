@@ -6,7 +6,9 @@ import shutil
 import subprocess
 import tempfile
 
-from pkg_resources import resource_filename
+import pytest
+
+from importlib.resources import files
 
 
 class tempdir(object):
@@ -21,7 +23,7 @@ class tempdir(object):
 
 
 def shell_lines(resource):
-    fn = resource_filename('msmbuilder', resource)
+    fn = files('msmbuilder').joinpath(resource)
     buf = ''
     with open(fn) as f:
         for line in f:
@@ -57,10 +59,6 @@ class workflow_tester(object):
                 check_call(shlex.split(line, posix=False))
 
 
-def test_workflows():
-    for fn in [
-        'basic.sh',
-        'rmsd.sh',
-        'ghmm.sh',
-    ]:
-        yield workflow_tester(fn)
+@pytest.mark.parametrize('fn', ['basic.sh', 'rmsd.sh', 'ghmm.sh'])
+def test_workflows(fn):
+    workflow_tester(fn)()

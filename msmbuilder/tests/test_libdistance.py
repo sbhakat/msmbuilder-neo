@@ -12,6 +12,26 @@ VECTOR_METRICS = ("euclidean", "sqeuclidean", "cityblock", "chebyshev",
                   "canberra", "braycurtis", "hamming", "jaccard", "cityblock")
 
 
+def _legacy_jaccard(u, v):
+    # MSMBuilder uses SciPy's original real-valued Jaccard distance: the
+    # fraction of non-zero coordinates that differ. SciPy 1.15+ casts inputs
+    # to bool instead, so compare against the original definition explicitly.
+    nonzero = (u != 0) | (v != 0)
+    return np.double(((u != v) & nonzero).sum()) / max(nonzero.sum(), 1)
+
+
+def scipy_cdist(XA, XB, metric):
+    if metric == "jaccard":
+        return scipy.spatial.distance.cdist(XA, XB, _legacy_jaccard)
+    return scipy.spatial.distance.cdist(XA, XB, metric)
+
+
+def scipy_pdist(X, metric):
+    if metric == "jaccard":
+        return scipy.spatial.distance.pdist(X, _legacy_jaccard)
+    return scipy.spatial.distance.pdist(X, metric)
+
+
 def setup_module():
     global X_double, Y_double, X_float, Y_float, X_rmsd, Y_rmsd, X_indices
     X_double = random.randn(10, 2)
@@ -44,7 +64,7 @@ def test_assign_nearest_double_float_1():
                     cdist_1.argmin(axis=1))
             f.description = 'assign_nearest: %s %s' % (metric, X.dtype)
 
-            yield lambda: np.testing.assert_almost_equal(
+            np.testing.assert_almost_equal(
                     inertia,
                     cdist_1[np.arange(10), assignments].sum(),
                     decimal=5 if X.dtype == np.float32 else 10)
@@ -64,10 +84,10 @@ def test_assign_nearest_float_double_2():
             assert isinstance(inertia, float)
 
             cdist_1 = cdist(X[X_indices], Y, metric=metric)
-            yield lambda: np.testing.assert_array_equal(
+            np.testing.assert_array_equal(
                     assignments,
                     cdist_1.argmin(axis=1))
-            yield lambda: np.testing.assert_almost_equal(
+            np.testing.assert_almost_equal(
                     inertia,
                     cdist_1[np.arange(5), assignments].sum(),
                     decimal=5 if X.dtype == np.float32 else 10)
@@ -117,8 +137,8 @@ def test_cdist_double_float_1():
     for metric in VECTOR_METRICS:
         for X, Y in ((X_double, Y_double), (X_float, Y_float)):
             cdist_1 = cdist(X, Y, metric)
-            cdist_2 = scipy.spatial.distance.cdist(X, Y, metric)
-            yield lambda: np.testing.assert_almost_equal(
+            cdist_2 = scipy_cdist(X, Y, metric)
+            np.testing.assert_almost_equal(
                     cdist_1,
                     cdist_2,
                     decimal=5 if X.dtype == np.float32 else 10)
@@ -129,8 +149,8 @@ def test_pdist_double_float_1():
     for metric in VECTOR_METRICS:
         for X, Y in ((X_double, Y_double), (X_float, Y_float)):
             pdist_1 = pdist(X, metric)
-            pdist_2 = scipy.spatial.distance.pdist(X, metric)
-            yield lambda: np.testing.assert_almost_equal(
+            pdist_2 = scipy_pdist(X, metric)
+            np.testing.assert_almost_equal(
                     pdist_1,
                     pdist_2,
                     decimal=5 if X.dtype == np.float32 else 10)
@@ -141,8 +161,8 @@ def test_pdist_double_float_2():
     for metric in VECTOR_METRICS:
         for X, Y in ((X_double, Y_double), (X_float, Y_float)):
             pdist_1 = pdist(X, metric, X_indices=X_indices)
-            pdist_2 = scipy.spatial.distance.pdist(X[X_indices], metric)
-            yield lambda: np.testing.assert_almost_equal(
+            pdist_2 = scipy_pdist(X[X_indices], metric)
+            np.testing.assert_almost_equal(
                     pdist_1,
                     pdist_2,
                     decimal=5 if X.dtype == np.float32 else 10)
@@ -188,7 +208,7 @@ def test_dist_double_float_1():
         for X, Y in ((X_double, Y_double), (X_float, Y_float)):
             dist_1 = dist(X, Y[0], metric)
             dist_2 = cdist(X, Y, metric)[:, 0]
-            yield lambda: np.testing.assert_almost_equal(
+            np.testing.assert_almost_equal(
                     dist_1, dist_2,
                     decimal=5 if X.dtype == np.float32 else 10)
 
@@ -199,7 +219,7 @@ def test_dist_double_float_2():
         for X, Y in ((X_double, Y_double), (X_float, Y_float)):
             dist_1 = dist(X, Y[0], metric, X_indices)
             dist_2 = cdist(X, Y, metric)[X_indices, 0]
-            yield lambda: np.testing.assert_almost_equal(
+            np.testing.assert_almost_equal(
                     dist_1,
                     dist_2,
                     decimal=5 if X.dtype == np.float32 else 10)

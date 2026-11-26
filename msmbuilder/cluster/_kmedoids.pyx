@@ -78,7 +78,7 @@ def kmedoids(npy_intp n_clusters, double[::1] distmatrix, npy_intp n_pass,
     cdef npy_intp[::1] clusterid_
     cdef npy_intp n_elements
     n_elements = int(1 + np.sqrt(8*len(distmatrix) + 1) / 2.0)
-    if len(distmatrix) != (n_elements * (n_elements-1) / 2):
+    if len(distmatrix) != (n_elements * (n_elements-1) // 2):
         raise ValueError('len(distmatrix)=%s is not a valid size '
                          'of a condensed distance matrix, which should be of '
                          'size (N*(N-1)/2) for some positive integer, N' %

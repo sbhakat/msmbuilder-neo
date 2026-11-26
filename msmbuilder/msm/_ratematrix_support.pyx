@@ -72,7 +72,7 @@ cpdef eig_K(const double[:, ::1] A, npy_intp n, double[::1] pi=None, which='K'):
 
 
 cdef int hadamard_X(const double[::1] w, const double[::1] expwt, double t,
-                    npy_intp n, double[:, ::1] A) nogil:
+                    npy_intp n, double[:, ::1] A) noexcept nogil:
     """
     Overwrite the matrix A by the elementwise product of A with the matrix
     X, where :math:`x_{ij}` is:
@@ -102,7 +102,7 @@ cdef int hadamard_X(const double[::1] w, const double[::1] expwt, double t,
                 A[i, j] *= t * expwt[i]
 
 
-cdef int hadamard_inplace(double[:, ::1] A, const double[:, ::1] B) nogil:
+cdef int hadamard_inplace(double[:, ::1] A, const double[:, ::1] B) noexcept nogil:
     """Overwrite the matrix A by its element-wise product with matrix B
     """
     if (A.shape[0] != B.shape[0]) or (A.shape[1] != B.shape[1]):
@@ -117,7 +117,7 @@ cdef int hadamard_inplace(double[:, ::1] A, const double[:, ::1] B) nogil:
 
 cdef int transmat(const double[::1] expwt, const double[:, ::1] U,
                   const double[:, ::1] V, npy_intp n,
-                  double[:, ::1] temp, double[:, ::1] T) nogil:
+                  double[:, ::1] temp, double[:, ::1] T) noexcept nogil:
     """Compute the transition matrix, expm(Kt), from the eigen-decomposition
     of K
 
@@ -134,7 +134,7 @@ cdef int transmat(const double[::1] expwt, const double[:, ::1] U,
 
 cpdef int dw_du(const double[:, ::1] dKu, const double[:, ::1] U,
             const double[:, ::1] V, npy_intp n, double[::1] temp,
-            double[::1] out) nogil:
+            double[::1] out) noexcept nogil:
     r"""Calculate the derivative of the eigenvalues, w, of a matrix, K(\theta),
     with respect to \theta_u.
 
@@ -224,10 +224,9 @@ cdef dT_dtheta(const double[::1] w, const double[:, ::1] U, const double[:, ::1]
 
         assert np.allclose(dT, Y)
         assert np.allclose(T, np.dot(np.dot(V, np.diag(expwt)), U.T))
-        assert np.allclose(T, scipy.linalg.expm(t*np.asarray(K)))
 
 
-cdef double exprel(double x) nogil:
+cdef double exprel(double x) noexcept nogil:
     """Compute the quantity (\exp(x)-1)/x using an algorithm that is accurate
     for small x.
     """

@@ -4,7 +4,10 @@ import numpy as np
 import scipy.optimize
 from msmbuilder.msm._ratematrix import ldirichlet_softmax
 from msmbuilder.msm._ratematrix import lexponential
-from pyhmc import hmc
+import pytest
+
+pyhmc = pytest.importorskip("pyhmc")  # optional dependency
+hmc = pyhmc.hmc
 
 from msmbuilder.cluster import NDGrid
 from msmbuilder.example_datasets import QuadWell

@@ -1,39 +1,51 @@
-msmbuilder2022
-==========
-msmbuilder2022 is based on msmbuilder-3.8.0. msmbuilder2022 is developed and maintained by Xuhui Huang's group at University of Wisconsin-Madison. Mr. Bojun Liu is the main contact for msmbuilder2022.
+MSMBuilder Neo
+==============
 
-home: https://github.com/msmbuilder/msmbuilder
+MSMBuilder Neo is a modernized fork of [msmbuilder2022](https://github.com/msmbuilder/msmbuilder2022),
+which is itself based on msmbuilder 3.8.0. It keeps the MSMBuilder API
+(`import msmbuilder`) while updating the build so the package installs on
+current Python and NumPy.
 
+> **Status:** early development (Phase 1 of the roadmap: packaging). APIs may change.
 
 Installation
 ------------
-### Recent note:
 
-Now `msmbuilder2022` is suggested to be installed with a local clone:
+MSMBuilder Neo requires Python 3.10 or newer and works with NumPy 1.24+ and NumPy 2.
 
-```bash
-git clone https://github.com/msmbuilder/msmbuilder2022.git
-```
+Install from a local clone:
 
 ```bash
-python -m pip install ./msmbuilder2022
+git clone https://github.com/sbhakat/msmbuilder-neo.git
+python -m pip install ./msmbuilder-neo
 ```
 
-We will enable `pip install` from  `pypi` in our next formal release soon!
+Prebuilt wheels for Linux, macOS and Windows are built by CI and will be
+published to PyPI once the first release is cut.
 
---------------------------------
+Building from source needs a C/C++ compiler. OpenMP is used when found and
+skipped otherwise (pass `-Csetup-args=-Dopenmp=disabled` to turn it off). On
+macOS, install it with `brew install libomp`.
 
-The old installation mechanism for `msmbuilder2022` is with `conda`: (only for Python version below 3.10)
+To run the tests:
 
 ```bash
-$ conda install -c conda-forge testmsm
+python -m pip install "./msmbuilder-neo[test]"
+python msmbuilder-neo/msmbuilder/tests/data_init.py   # downloads example datasets
+pytest --pyargs msmbuilder.tests
 ```
 
+Credits
+-------
 
-MSMBuilder
-==========
+MSMBuilder was created by the Pande lab at Stanford University.
+msmbuilder2022 is developed and maintained by Xuhui Huang's group at the
+University of Wisconsin-Madison. MSMBuilder Neo keeps their copyright notices
+and the LGPL-2.1-or-later license.
 
-[![Build Status](https://travis-ci.org/msmbuilder/msmbuilder.svg?branch=master)](https://travis-ci.org/msmbuilder/msmbuilder)
+About MSMBuilder
+----------------
+
 [![PyPi version](https://badge.fury.io/py/msmbuilder.svg)](https://pypi.python.org/pypi/msmbuilder/)
 [![License](https://img.shields.io/badge/license-LGPLv2.1+-red.svg?style=flat)](https://pypi.python.org/pypi/msmbuilder/)
 [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg?style=flat)](http://msmbuilder.org)
