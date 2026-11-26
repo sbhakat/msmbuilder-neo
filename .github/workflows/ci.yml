@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install ruff==0.17.6 mypy==2.4.1
+      - run: ruff check msmbuilder examples benchmarks
+      - run: mypy
+
+  build:
+    name: Build wheel and sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # version.py records the git revision
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build
+      - run: python -m build
+      - name: Check the wheel is pure Python
+        run: |
+          ls dist
+          test "$(ls dist/*.whl | wc -l)" -eq 1
+          ls dist/*-py3-none-any.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  test:
+    name: Test on ${{ matrix.os }}, Python ${{ matrix.python }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15, macos-15-intel]
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4   # only for msmbuilder/tests/data_init.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Install the wheel with test dependencies
+        shell: bash
+        run: python -m pip install "$(ls dist/*.whl)[test]"
+      - name: Cache example datasets
+        uses: actions/cache@v4
+        with:
+          path: ~/msmbuilder_data
+          key: msmbuilder-data-v1
+      - name: Run tests against the installed package
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/run" && cd "$RUNNER_TEMP/run"
+          python "$GITHUB_WORKSPACE/msmbuilder/tests/data_init.py"
+          python -m pytest --pyargs msmbuilder.tests -q -n auto -p no:cacheprovider

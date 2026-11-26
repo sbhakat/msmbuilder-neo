@@ -14,7 +14,7 @@ from sklearn.utils import check_random_state
 from sklearn.base import ClusterMixin, TransformerMixin
 
 from . import MultiSequenceClusterMixin
-from . import _kmedoids  # type: ignore[attr-defined]  # compiled extension
+from . import _kmedoids
 from .. import libdistance
 from ..base import BaseEstimator
 

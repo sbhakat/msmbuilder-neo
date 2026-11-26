@@ -13,7 +13,7 @@ import numpy as np
 from sklearn.base import ClusterMixin, TransformerMixin
 
 from . import MultiSequenceClusterMixin
-from . import _kmedoids  # type: ignore[attr-defined]  # compiled extension
+from . import _kmedoids
 from .. import libdistance
 from ..base import BaseEstimator
 

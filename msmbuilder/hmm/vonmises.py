@@ -340,7 +340,10 @@ timescales: {timescales}
         sequences = [ensure_type(s, dtype=np.float32, ndim=2, name='s', warn_on_cast=False)
                      for s in sequences]
         dataset = np.vstack(sequences)
-        cluster_centers = cluster.MiniBatchKMeans(n_clusters=self.n_states).fit(
+        # random_state was accepted but never used before MSMBuilder Neo, so
+        # VonMisesHMM fits could not be made reproducible.
+        cluster_centers = cluster.MiniBatchKMeans(
+            n_clusters=self.n_states, random_state=self.random_state).fit(
             np.hstack((np.sin(dataset), np.cos(dataset)))).cluster_centers_
         self._means_ = np.arctan2(cluster_centers[:, :self.n_features],
                                   cluster_centers[:, self.n_features:])
