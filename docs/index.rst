@@ -1,89 +1,136 @@
 .. _msmbuilder:
 
-MSMBuilder
-==========
-
+:html_theme.sidebar_secondary.remove:
 
 .. raw:: html
 
-    <h2 style="margin-top: -1em; font-size: 120%;">
-    Statistical models for Biomolecular Dynamics</h2>
+   <div class="msmb-hero">
 
-MSMBuilder is an application and python library. It builds
-statistical models for high-dimensional time-series. The particular focus
-of the package is on the analysis of atomistic simulations of biomolecular
-dynamics such as protein folding and conformational change.
+MSMBuilder Neo
+==============
 
-To get started via `Anaconda Python <https://www.continuum.io/downloads>`_,
-use::
+.. rst-class:: msmb-tagline
 
-    conda install -c omnia msmbuilder
+   Statistical models for biomolecular dynamics: featurize simulations, find
+   their slow processes, and build validated Markov state models -- on
+   current Python, NumPy 2 and every major platform.
 
-MSMBuilder includes algorithms for constructing dynamical models:
+.. raw:: html
 
-- :ref:`featurization`
-- :ref:`feature_selection`
-- :ref:`preprocessing`
-- :ref:`decomposition`
-- :ref:`cluster`
-- :ref:`msm`
-- :ref:`hmm`
-- :ref:`ratematrix`
+   </div>
 
-As well as methods for analysis and validation of the models:
+.. code-block:: bash
 
-- :ref:`gmrq`
-- :ref:`tpt`
+   pip install git+https://github.com/sbhakat/msmbuilder-neo.git
+   msmb Pipeline --template > pipeline.yaml    # describe your analysis
+   msmb Pipeline pipeline.yaml                 # run it, with provenance
 
-New users should check out:
+MSMBuilder Neo is a modernized fork of `MSMBuilder
+<https://github.com/msmbuilder/msmbuilder>`_ (via `msmbuilder2022
+<https://github.com/msmbuilder/msmbuilder2022>`_). It keeps the MSMBuilder
+API -- ``import msmbuilder`` and the ``msmb`` command line work as before --
+and adds the methods of current Markov state model papers: VAMP scoring,
+VAMPnets and other deep collective variables, deeptime's TRAM, PyEMMA-style
+PCCA+ macrostates, and reproducible YAML pipelines.
 
-- :ref:`background`
-- :ref:`installation`
-- :ref:`tutorial`
-- :ref:`examples`
-- :ref:`faq`
+.. grid:: 1 2 3 3
+   :gutter: 3
 
-MSMBuilder is most effective as a library. Intermediate users should
-familiarize themselves with:
+   .. grid-item-card:: :octicon:`rocket` Getting started
+      :link: getting_started
+      :link-type: ref
 
-- :ref:`apipatterns`
-- :ref:`datasets`
-- :ref:`changelog`
+      Install MSMBuilder Neo and build your first Markov state model, from
+      trajectories to macrostates, in one notebook.
 
+   .. grid-item-card:: :octicon:`book` User guide
+      :link: user_guide
+      :link-type: ref
 
-MSMBuilder is developed by primarily by researchers at Stanford University,
-and we welcome contributions. The development all takes place on `Github
-<https://github.com/msmbuilder/msmbuilder>`_.  MSMBuilder is licensed under
-the GNU LGPL (v2.1 or later).
+      Featurization, tICA and VAMP, clustering, Markov state models,
+      macrostates, transition path theory, and the theory behind them.
 
+   .. grid-item-card:: :octicon:`beaker` Examples
+      :link: examples
+      :link-type: ref
 
+      Notebooks, executed every time the documentation is built, so every
+      output you see comes from the current code.
+
+   .. grid-item-card:: :octicon:`code` API reference
+      :link: api
+      :link-type: ref
+
+      Every estimator, featurizer and function, with parameters and
+      attributes.
+
+   .. grid-item-card:: :octicon:`sparkle-fill` What's new in Neo
+      :link: whats_new
+      :link-type: ref
+
+      Pure Python on Numba, NumPy 2, VAMP and deep learning, deeptime
+      adapters, h5py storage, pipelines with provenance.
+
+   .. grid-item-card:: :octicon:`arrow-switch` Migrating
+      :link: migration
+      :link-type: ref
+
+      Coming from MSMBuilder 3.8 or msmbuilder2022: what changed, what was
+      removed, and the few results that differ.
+
+What it does
+------------
+
+.. list-table::
+   :widths: 25 75
+   :class: msmb-features
+
+   * - **Featurize**
+     - Dihedrals, contacts, distances, RMSD, SASA, ligand features and more
+       on MDTraj trajectories -- or any format MDAnalysis reads, in
+       memory-bounded chunks.
+   * - **Reduce**
+     - tICA, sparse and kernel tICA, PCA, VAMP; VAMPnets, state-free
+       reversible VAMPnets, time-lagged autoencoders, DeepTICA and DeepLDA
+       (optional PyTorch), exportable to PLUMED.
+   * - **Cluster**
+     - k-means, k-centers, k-medoids, regular spatial, landmark and
+       scikit-learn clusterers, all on lists of trajectories.
+   * - **Model**
+     - Maximum-likelihood, Bayesian and continuous-time Markov state models,
+       hidden Markov models, TRAM for biased simulations, and
+       OOM-reweighted MSMs for short off-equilibrium runs.
+   * - **Validate**
+     - GMRQ and VAMP scores with cross-validation, implied timescales,
+       Chapman-Kolmogorov tests.
+   * - **Interpret**
+     - PCCA and PCCA+ macrostates with representative structures written
+       as PDB files, transition path theory (fluxes, committors, pathways,
+       mean first passage times).
+   * - **Reproduce**
+     - One YAML file runs the whole analysis and records parameters,
+       package versions and checksums; ``msmb Pipeline --verify`` checks a
+       rerun reproduces it.
+
+Citing
+------
+
+If you use MSMBuilder Neo in published work, please cite the MSMBuilder
+papers listed under :ref:`publications`, and the papers of the methods you
+use (each page lists them).
+
+MSMBuilder Neo is licensed under the GNU LGPL, version 2.1 or later.
+Development happens on `GitHub <https://github.com/sbhakat/msmbuilder-neo>`_.
 
 .. toctree::
-    :maxdepth: 2
-    :hidden:
+   :hidden:
+   :maxdepth: 2
 
-    background
-    installation
-    tutorial
-    pipeline
-    examples/index
-    featurization
-    feature_selection
-    preprocessing
-    decomposition
-    cluster
-    msm
-    gmrq
-    tpt
-    ratematrix
-    hmm
-    datasets
-    io
-    apipatterns
-    plugins
-    faq
-    changelog
-    publications
-    contributing
-
-.. vim: tw=75
+   getting_started
+   user_guide
+   examples/index
+   api
+   whats_new
+   migration
+   publications
+   contributing

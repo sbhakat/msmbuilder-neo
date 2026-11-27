@@ -13,7 +13,6 @@ Feature Selectors
 -----------------
 
 .. autosummary::
-    :toctree: _feature_selection/
 
     FeatureSelector
     VarianceThreshold

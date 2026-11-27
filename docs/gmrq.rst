@@ -55,7 +55,6 @@ Algorithms
 ----------
 
 .. autosummary::
-    :toctree: _gmrq/
 
     decomposition.tICA.score
     decomposition.VAMP.score

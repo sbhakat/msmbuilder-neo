@@ -18,7 +18,6 @@ Featurizations
 --------------
 
 .. autosummary::
-    :toctree: _featurization/
 
     AtomPairsFeaturizer
     ContactFeaturizer
@@ -64,7 +63,6 @@ each frame independently. The one small exception is
 differ by about 0.1% for the first frames of a chunk.
 
 .. autosummary::
-    :toctree: _featurization/
 
     msmbuilder.io.mdanalysis.featurize_mdanalysis
     msmbuilder.io.mdanalysis.iter_mdanalysis

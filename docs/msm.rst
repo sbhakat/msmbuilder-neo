@@ -19,7 +19,6 @@ Algorithms
 ----------
 
 .. autosummary::
-    :toctree: _msm/
 
     MarkovStateModel
     BayesianMarkovStateModel
@@ -146,7 +145,7 @@ can assign the states near barriers differently, especially when asking for
 more macrostates than the system has clearly separated basins.
 
 Methods from deeptime (optional)
--------------------------------
+--------------------------------
 
 With deeptime installed (``pip install msmbuilder-neo[deeptime]``), these
 deeptime methods [#f7]_ work on MSMBuilder state-label sequences and return

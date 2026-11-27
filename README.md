@@ -6,9 +6,12 @@ which is itself based on msmbuilder 3.8.0. It keeps the MSMBuilder API
 (`import msmbuilder`) while updating the build so the package installs on
 current Python and NumPy.
 
-> **Status:** pre-release. Packaging, code health, native-code removal and new methods
-> (roadmap phases 0–4) are done; data storage and the pipeline runner (phase 5) are in
-> progress. APIs may change before 1.0.
+> **Status:** pre-release (roadmap phases 0–5 done; documentation and the 1.0 release in
+> progress). APIs may change before 1.0.
+
+**Documentation:** <https://sbhakat.github.io/msmbuilder-neo/> — getting started,
+user guide, executed example notebooks, API reference, and a migration guide from
+MSMBuilder 3.8 / msmbuilder2022.
 
 Installation
 ------------

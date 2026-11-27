@@ -14,7 +14,7 @@ edit ``docs/publications.bib`` and submit a pull request.
 
 {% for pub in publications %}
 {{pub.title}}
---------------------------------------------------------------------------------
+{{ '-' * (pub.title | length) }}
 
  * {{pub.author | join('; ')}}
  * *{{pub.journal}}* **{{pub.year}}**, {{pub.volume}} {{pub.pages}}

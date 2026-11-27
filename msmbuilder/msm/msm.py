@@ -249,12 +249,13 @@ class MarkovStateModel(BaseEstimator, _MappingTransformMixin,
             a corresponding index. This can be due, for example, to the ergodic
             trimming step.
 
-           ``clip``
+            ``clip``
                Unmapped labels are removed during transform. If they occur
                at the beginning or end of a sequence, the resulting transformed
                sequence will be shorted. If they occur in the middle of a
                sequence, that sequence will be broken into two (or more)
                sequences. (Default)
+
             ``fill``
                Unmapped labels will be replaced with NaN, to signal missing
                data. [The use of NaN to signal missing data is not fantastic,

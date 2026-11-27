@@ -66,7 +66,6 @@ Saving and loading
 ------------------
 
 .. autosummary::
-    :toctree: _io/
 
     load_trajs
     save_trajs
@@ -91,7 +90,6 @@ of molecular dynamics trajectories
 
 
 .. autosummary::
-    :toctree: _io/
 
     gather_metadata
     GenericParser
@@ -107,7 +105,6 @@ scripts to serve as a framework for an MSM project. You can use this
 functionality programatically.
 
 .. autosummary::
-    :toctree: _io/
 
     TemplateProject
 

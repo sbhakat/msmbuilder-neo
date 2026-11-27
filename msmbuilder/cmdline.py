@@ -207,6 +207,27 @@ class mutually_exclusive_group:
 # Command Classes
 #-----------------------------------------------------------------------------
 
+def _number_or_word(number_type, default):
+    """The argparse type for a parameter documented as a number.
+
+    Many estimators document a parameter as ``int`` or ``float`` but default
+    to a word ('auto', 'all', 'on', ...). argparse converts string defaults
+    with the argument's type, so a plain ``int`` made such commands fail
+    before running. Values that are not numbers are passed through for the
+    estimator to validate.
+    """
+    if number_type is str or not isinstance(default, str):
+        return number_type
+
+    def convert(value):
+        try:
+            return number_type(value)
+        except (TypeError, ValueError):
+            return value
+    convert.__name__ = number_type.__name__
+    return convert
+
+
 class ClassProperty(property):
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
@@ -363,7 +384,8 @@ class NumpydocClassCommand(Command):
                         basic_types = {'str': str, 'float': float, 'int': int}
                         for basic_type in basic_types:
                             if basic_type in typemap[arg]:
-                                kwargs['type'] = basic_types[basic_type]
+                                kwargs['type'] = _number_or_word(
+                                    basic_types[basic_type], kwargs.get('default'))
                                 break
 
             group.add_argument(f'--{arg}', **kwargs)

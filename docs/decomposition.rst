@@ -150,7 +150,6 @@ Algorithms
 ----------
 
 .. autosummary::
-    :toctree: _decomposition/
 
     tICA
     VAMP

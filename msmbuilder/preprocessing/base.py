@@ -107,12 +107,14 @@ class MultiSequencePreprocessingMixin(BaseEstimator):
 
     def partial_fit(self, sequence, y=None):
         """Fit Preprocessing to X.
+
         Parameters
         ----------
         sequence : array-like, [sequence_length, n_features]
             A multivariate timeseries.
         y : None
             Ignored
+
         Returns
         -------
         self

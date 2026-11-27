@@ -255,3 +255,43 @@ def test_vamp_command():
         expected = VAMP(lag_time=2, n_components=2).fit(seqs)
         np.testing.assert_allclose(model.singular_values_, expected.singular_values_)
         np.testing.assert_allclose(dataset('vamp.h5')[0], expected.transform(seqs)[0])
+
+
+def test_command_defaults_parse():
+    # Every documented default must survive the command's own argument types
+    # (a parameter documented as int but defaulting to 'auto' used to make
+    # e.g. `msmb KMeans` fail before running).
+    import argparse
+
+    import msmbuilder.commands  # noqa: F401
+    from msmbuilder.cmdline import NumpydocClassCommand
+
+    def walk(cls):
+        for sub in cls.__subclasses__():
+            yield sub
+            yield from walk(sub)
+
+    checked = 0
+    for cmd in set(walk(NumpydocClassCommand)):
+        if not getattr(cmd, '_concrete', False) or getattr(cmd, 'klass', None) is None:
+            continue
+        parser = argparse.ArgumentParser()
+        cmd._register_arguments(parser)
+        for action in parser._actions:
+            if callable(action.type) and isinstance(action.default, str):
+                action.type(action.default)     # must not raise
+        checked += 1
+    assert checked > 50
+
+
+def test_kmeans_commands_run_with_defaults(tmp_path):
+    rs = np.random.RandomState(0)
+    path = str(tmp_path / "x.h5")
+    with dataset(path, mode="w", fmt="hdf5") as ds:
+        for i in range(3):
+            ds[i] = rs.randn(100, 2)
+    for cmd in ("KMeans", "MiniBatchKMeans"):
+        out = str(tmp_path / (cmd + ".h5"))
+        assert subprocess.call(["msmb", cmd, "-i", path, "--transformed", out,
+                                "--n_clusters", "3", "--random_state", "0"]) == 0
+        assert os.path.exists(out)
