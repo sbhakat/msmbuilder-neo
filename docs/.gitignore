@@ -1,0 +1,5 @@
+examples/notebooks/
+generated/
+jupyter_execute/
+publications.rst
+_build/

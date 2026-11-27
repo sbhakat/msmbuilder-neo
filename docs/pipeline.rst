@@ -102,7 +102,6 @@ API
 ---
 
 .. autosummary::
-    :toctree: _pipeline/
 
     run_pipeline
     verify_pipeline

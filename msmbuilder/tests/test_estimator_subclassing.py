@@ -52,3 +52,27 @@ def test_all_estimators():
     for key, value in import_all_estimators(msmbuilder).items():
         if 'msmbuilder' in value.__module__:
             assert issubclass(value, msmbuilder.base.BaseEstimator), value
+
+
+def test_dir_of_unfitted_estimators():
+    # dir() (used by IPython display and tab completion) must not fail on
+    # estimators whose fitted-only properties cannot be computed yet
+    import msmbuilder.base
+    from msmbuilder.decomposition import tICA
+    from msmbuilder.lumping import PCCAPlus
+    from msmbuilder.msm import BayesianMarkovStateModel, ContinuousTimeMSM, MarkovStateModel
+
+    for est in (MarkovStateModel(), BayesianMarkovStateModel(), ContinuousTimeMSM(), tICA(),
+                PCCAPlus(2)):
+        names = dir(est)
+        assert 'fit' in names and 'get_params' in names
+    count = 0
+    for cls in import_all_estimators(msmbuilder).values():
+        if issubclass(cls, msmbuilder.base.BaseEstimator):
+            try:
+                est = cls()
+            except (TypeError, ValueError):
+                continue                    # needs required arguments
+            dir(est)
+            count += 1
+    assert count > 20

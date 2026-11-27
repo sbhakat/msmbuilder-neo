@@ -3,55 +3,66 @@
 Installation
 ============
 
-The preferred installation mechanism for ``msmbuilder`` is with ``conda``.
+MSMBuilder Neo needs Python 3.10 or newer and runs on Linux and macOS (Intel
+and Apple Silicon). It is pure Python: no compiler is needed. Numerical
+kernels are compiled by `Numba <https://numba.pydata.org>`_ the first time
+they are used (a few seconds, once; the result is cached).
 
 .. code-block:: bash
 
-    $ conda install -c omnia msmbuilder
+    pip install git+https://github.com/sbhakat/msmbuilder-neo.git
 
+A release on PyPI (``pip install msmbuilder-neo``) and conda-forge will
+follow version 1.0. The package is imported as ``msmbuilder`` and provides
+the ``msmb`` command, like the original MSMBuilder, so the two should not be
+installed in the same environment.
 
-If you don't have conda, or are new to scientific python, we recommend that
-you download the `Anaconda scientific python distribution
-<https://store.continuum.io/cshop/anaconda/>`_.
+Optional features
+-----------------
 
+Install extras with ``pip install "msmbuilder-neo[torch,deeptime] @ git+https://github.com/sbhakat/msmbuilder-neo.git"``
+(or ``pip install ".[torch,deeptime]"`` from a clone):
 
-From Source
------------
+.. list-table::
+   :header-rows: 1
+   :widths: 18 82
 
-MSMBuilder is a python package that heavily leans on other components of the
-scientific python ecosystem. See ``devtools/conda-recipe/meta.yaml`` for a
-complete and up-to-date list of build, run, and test dependencies. When you
-are sure the dependencies are satisfied you can install from PyPI
+   * - Extra
+     - Enables
+   * - ``torch``
+     - VAMPnets, state-free reversible VAMPnets, time-lagged autoencoders,
+       DeepTICA and DeepLDA (:ref:`decomposition`). Install a CPU or CUDA
+       build of PyTorch as you prefer.
+   * - ``deeptime``
+     - TRAM, OOM-reweighted MSMs, the Chapman-Kolmogorov test, conversion
+       to deeptime models, and PyEMMA's PCCA+ algorithm (:ref:`msm`).
+   * - ``mdanalysis``
+     - Reading any trajectory format MDAnalysis supports, in chunks
+       (:ref:`featurization`).
+   * - ``dask``
+     - Lazily loaded datasets larger than memory (:ref:`datasets`).
+   * - ``parquet``
+     - Project metadata stored as Parquet (:ref:`io`).
+   * - ``docs``
+     - Building this documentation.
+
+From a clone
+------------
 
 .. code-block:: bash
 
-    $ pip install msmbuilder
+    git clone https://github.com/sbhakat/msmbuilder-neo.git
+    cd msmbuilder-neo
+    pip install -e ".[test]"
+    cd /tmp && pytest --pyargs msmbuilder.tests -n auto
 
-or from source
+(Run the tests from outside the source tree, against the installed package.)
 
-.. code-block:: bash
+Platforms
+---------
 
-    $ git clone git@github.com:msmbuilder/msmbuilder
-    $ cd msmbuilder/
-    $ pip install .
-    $ # (or: python setup.py install)
-
-Frequently Asked Questions
---------------------------
-
-**Do I need Anaconda python? Can't I use the python that comes with my
-operating like /usr/bin/python?**
-
-You can have multiple ``python`` installations on your computer which do
-not interact with one another at all. The system python interpreter is used
-by your operating system for some of its own programs but is not the best
-choice for data analysis or science.
-
-We strongly recommend that you install Anaconda or Miniconda python
-distribution and that you have the ``conda`` package manager available.
-
-If you're interested in some of the details about packaging and scientific
-python, see `this blog post by Travis Oliphant
-<http://technicaldiscovery.blogspot.com/2013/12/why-i-promote-conda.html>`_.
-
-.. vim: tw=75
+Continuous integration tests every change on Linux x86_64 and aarch64 and
+macOS on Apple Silicon and Intel, with Python 3.10 and 3.13. Windows is not
+supported for now. On Intel Macs, current Numba and PyTorch publish no
+wheels, so Numba is pinned below 0.63 there and the PyTorch features are
+unavailable.

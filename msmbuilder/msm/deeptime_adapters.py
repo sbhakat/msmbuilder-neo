@@ -218,7 +218,7 @@ class OOMReweightedMSM(MarkovStateModel):
 
     Short simulations started out of equilibrium, analysed on a discretization
     that is not exactly Markovian, give biased MSM estimates. This estimator
-    (deeptime's ``OOMReweightedMSM``, [3]_) estimates an observable operator
+    (deeptime's ``OOMReweightedMSM``, [1]_) estimates an observable operator
     model from two-step transition counts and uses it to reweight the
     transition counts to their equilibrium values before estimating the
     transition matrix.
@@ -262,6 +262,11 @@ class OOMReweightedMSM(MarkovStateModel):
     transmat_, populations_, countsmat_, mapping_, n_states_
         As for :class:`MarkovStateModel`; ``countsmat_`` are the (not
         reweighted) transition counts on the model's states.
+
+    References
+    ----------
+    .. [1] Nueske, F., Wu, H., Prinz, J.-H., Wehmeyer, C., Clementi, C. and
+       Noe, F. J. Chem. Phys. 146, 094104 (2017).
     """
 
     def __init__(self, lag_time=1, reversible=True, sliding_window=True,
@@ -307,7 +312,7 @@ class OOMReweightedMSM(MarkovStateModel):
 class TRAM(BaseEstimator):
     """Transition-based reweighting analysis method (TRAM).
 
-    TRAM [2]_ combines simulations run in several thermodynamic states
+    TRAM [1]_ combines simulations run in several thermodynamic states
     (different bias potentials, temperatures or Hamiltonians) into one
     model: the free energy of each thermodynamic state, the unbiased free
     energy of each Markov state, and a Markov state model for every
@@ -360,6 +365,11 @@ class TRAM(BaseEstimator):
     converged_ : bool
         Whether the free energies converged to ``maxerr`` within ``maxiter``
         iterations (otherwise deeptime also issues a ConvergenceWarning).
+
+    References
+    ----------
+    .. [1] Wu, H., Paul, F., Wehmeyer, C. and Noe, F. Proc. Natl. Acad. Sci.
+       USA 113, E3221-E3230 (2016).
     """
 
     def __init__(self, lag_time=1, sliding_window=True, maxiter=1000, maxerr=1e-8,

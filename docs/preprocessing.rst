@@ -13,7 +13,6 @@ Preprocessors
 -------------
 
 .. autosummary::
-    :toctree: _preprocessing/
 
     Binarizer
     Butterworth

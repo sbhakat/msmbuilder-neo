@@ -63,7 +63,6 @@ Algorithms
 ----------
 
 .. autosummary::
-    :toctree: _ratematrix/
 
     ContinuousTimeMSM
 

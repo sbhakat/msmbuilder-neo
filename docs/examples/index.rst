@@ -3,35 +3,44 @@
 Examples
 ========
 
-The following examples show off various aspects or capabilities of
-MSMBuilder. They can be run interactively in Jupyter (IPython) notebook.
-Download the `notebook files
-<https://github.com/msmbuilder/msmbuilder/tree/master/examples>`_ and open
-them in Jupyter::
-
-    $ jupyter notebook
-
-.. To make the ipython rendered images show up, each rst file must be
-   in its own directory.
+Every notebook below is executed each time the documentation is built, so
+its outputs come from the current code. Download them from the `examples
+directory <https://github.com/sbhakat/msmbuilder-neo/tree/main/examples>`_
+to run them yourself (``pip install jupyter`` first).
 
 .. toctree::
-   :maxdepth: 2
-   :titlesonly:
-   
-   Fs-Peptide-in-RAM
-   Fs-Peptide-with-dataset
-   Fs-Peptide-command-line
-   tICA-vs-PCA
-   Clustering-Comparison
-   GMRQ-Model-Selection
-   Ward-Clustering
-   Ligand-Featurization
+   :maxdepth: 1
+   :caption: Start here
 
+   notebooks/Quickstart
 
-Contributing examples
----------------------
+.. toctree::
+   :maxdepth: 1
+   :caption: Fs peptide
 
-Do you have a neat example of using MSMBuilder? Format your code
-into an IPython notebook and submit a pull request!
+   notebooks/Fs-Peptide-in-RAM
+   notebooks/Fs-Peptide-with-dataset
+   notebooks/Fs-Peptide-with-Pipeline
+   notebooks/Fs-Peptide-command-line
 
-.. vim: tw=75
+.. toctree::
+   :maxdepth: 1
+   :caption: Methods
+
+   notebooks/tICA-vs-PCA
+   notebooks/Clustering-Comparison
+   notebooks/GMRQ-Model-Selection
+   notebooks/Ward-Clustering
+   notebooks/Ligand-Featurization
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Advanced
+
+   notebooks/implied-timescales
+   notebooks/uncertainty
+   notebooks/bayesian-msm
+   notebooks/hmm-and-msm
+   notebooks/quadwell
+   notebooks/quadwell-n-states
+   notebooks/plot-tica-heatmap

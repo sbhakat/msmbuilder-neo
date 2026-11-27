@@ -170,17 +170,18 @@ class Featurizer(BaseEstimator, TransformerMixin):
         -------
         feature_descs : list of dict
             Dictionary describing each feature with the following information
-            about the atoms participating in each feature
-                - resnames: unique names of residues
-                - atominds: the four atom indicies
-                - resseqs: unique residue sequence ids (not necessarily
-                  0-indexed)
-                - resids: unique residue ids (0-indexed)
-                - featurizer: Featurizer name
-                - featuregroup: Other information
+            about the atoms participating in each feature:
+
+            - resnames: unique names of residues
+            - atominds: the four atom indicies
+            - resseqs: unique residue sequence ids (not necessarily
+              0-indexed)
+            - resids: unique residue ids (0-indexed)
+            - featurizer: Featurizer name
+            - featuregroup: Other information
 
         Notes
-        -------
+        -----
         Method resorts to returning N/A for everything if describe_features in not
         implemented in the sub_class
         """
