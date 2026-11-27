@@ -48,9 +48,11 @@ clear as you continue reading the documentation.
 5. :ref:`Estimate a model<msm>` from the clustered data. We typically build
    an MSM, which models the important dynamics of the system.
 
-6. Use :ref:`GMRQ cross-validation<gmrq>` to select the best model. There
-   are many hyperparameters (knobs to tweak) in the workflow. This scoring
-   function can help us pick the best values.
+6. :ref:`Select the best model<model_selection>` by cross-validation. There
+   are many hyperparameters (knobs to tweak) in the workflow -- features,
+   number of tICA components, number of states. A score (VAMP-2, or the
+   GMRQ for reversible dynamics) evaluated on held-out trajectories tells
+   which values describe the slow dynamics best.
 
 
 .. figure:: _static/flow-chart.png

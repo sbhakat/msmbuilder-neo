@@ -551,6 +551,11 @@ class FunctionFeaturizer(Featurizer):
         return self.function(traj,  **self.func_args)
 
 
+def _as_list(types):
+    """A dihedral type, or several, as a list."""
+    return [types] if isinstance(types, str) else list(types)
+
+
 class DihedralFeaturizer(Featurizer):
     """Featurizer based on dihedral angles.
 
@@ -569,10 +574,11 @@ class DihedralFeaturizer(Featurizer):
     """
 
     def __init__(self, types=['phi', 'psi'], sincos=True):
+        # store the argument unchanged (scikit-learn's clone requires it)
+        self.types = types
+        self.sincos = sincos
         if isinstance(types, str):
             types = [types]
-        self.types = list(types)  # force a copy
-        self.sincos = sincos
 
         known = {'phi', 'psi', 'omega', 'chi1', 'chi2', 'chi3', 'chi4'}
         if not set(types).issubset(known):
@@ -603,7 +609,7 @@ class DihedralFeaturizer(Featurizer):
         """
 
         feature_descs = []
-        for dihed_type in self.types:
+        for dihed_type in _as_list(self.types):
             # TODO: Don't recompute dihedrals, just get the indices
             func = getattr(md, 'compute_%s' % dihed_type)
             # ainds is a list of four-tuples of atoms participating
@@ -643,7 +649,7 @@ class DihedralFeaturizer(Featurizer):
         transform : simultaneously featurize a collection of MD trajectories
         """
         x = []
-        for a in self.types:
+        for a in _as_list(self.types):
             func = getattr(md, 'compute_%s' % a)
             _, y = func(traj)
 
@@ -675,9 +681,10 @@ class VonMisesFeaturizer(Featurizer):
     """
 
     def __init__(self, types=['phi', 'psi'], n_bins=18, kappa=20.):
+        # store the argument unchanged (scikit-learn's clone requires it)
+        self.types = types
         if isinstance(types, str):
             types = [types]
-        self.types = list(types)  # force a copy
 
         if not isinstance(n_bins, int):
             raise TypeError('bins must be of type int.')
@@ -716,7 +723,7 @@ class VonMisesFeaturizer(Featurizer):
                 and dihedral type(phi/psi/chi1 etc )
         """
         feature_descs = []
-        for dihed_type in self.types:
+        for dihed_type in _as_list(self.types):
             # TODO: Don't recompute dihedrals, just get the indices
             func = getattr(md, 'compute_%s' % dihed_type)
             # ainds is a list of four-tuples of atoms participating
@@ -777,7 +784,7 @@ class VonMisesFeaturizer(Featurizer):
         transform : simultaneously featurize a collection of MD trajectories
         """
         x = []
-        for a in self.types:
+        for a in _as_list(self.types):
             func = getattr(md, 'compute_%s' % a)
             _, y = func(traj)
             res = vm.pdf(y[..., np.newaxis],

@@ -76,3 +76,49 @@ def test_dir_of_unfitted_estimators():
             dir(est)
             count += 1
     assert count > 20
+
+
+def test_estimators_can_be_cloned():
+    # scikit-learn's clone (used by GridSearchCV, cross_val_score, Pipeline
+    # searches) requires __init__ to store its arguments unchanged
+    import msmbuilder.base
+    from sklearn.base import clone
+
+    from msmbuilder.featurizer import DihedralFeaturizer, VonMisesFeaturizer
+    from msmbuilder.preprocessing import Butterworth
+
+    for est in (DihedralFeaturizer(types=['phi']), DihedralFeaturizer(types='psi'),
+                VonMisesFeaturizer(types=['phi', 'psi'], n_bins=10), Butterworth(width=4)):
+        c = clone(est)
+        assert c.get_params() == est.get_params()
+    count = 0
+    for cls in import_all_estimators(msmbuilder).values():
+        if issubclass(cls, msmbuilder.base.BaseEstimator):
+            try:
+                est = cls()
+            except (TypeError, ValueError):
+                continue
+            clone(est)
+            count += 1
+    assert count > 20
+
+
+def test_clone_preserves_behaviour():
+    import mdtraj as md
+    import numpy as np
+
+    from msmbuilder.example_datasets import AlanineDipeptide
+    from msmbuilder.featurizer import DihedralFeaturizer
+    from msmbuilder.preprocessing import Butterworth
+
+    traj = AlanineDipeptide().get().trajectories[0][:100]
+    assert isinstance(traj, md.Trajectory)
+    for types in ('phi', ['phi', 'psi']):
+        f = DihedralFeaturizer(types=types)
+        np.testing.assert_array_equal(f.partial_transform(traj),
+                                      DihedralFeaturizer(types=types).partial_transform(traj))
+    assert DihedralFeaturizer(types='phi').partial_transform(traj).shape[1] == 2
+    x = np.random.RandomState(0).randn(200, 2)
+    # an even width is rounded up to the next odd window, as before
+    np.testing.assert_array_equal(Butterworth(width=4).partial_transform(x),
+                                  Butterworth(width=5).partial_transform(x))
