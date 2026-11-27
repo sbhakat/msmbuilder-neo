@@ -1,3 +1,37 @@
+# The vector metrics are ported from distance_kernels.h, adapted from SciPy;
+# its notice (also in THIRD_PARTY_LICENSES.txt):
+#
+# Author: Damian Eads
+# Date:   September 22, 2007 (moved to new file on June 8, 2008)
+#
+# Copyright (c) 2007, 2008, Damian Eads. All rights reserved.
+# Adapted for incorporation into Scipy, April 9, 2008.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#   - Redistributions of source code must retain the above
+#     copyright notice, this list of conditions and the
+#     following disclaimer.
+#   - Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer
+#     in the documentation and/or other materials provided with the
+#     distribution.
+#   - Neither the name of the author nor the names of its
+#     contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """Distance metrics between vectors and between molecular conformations.
 
 Numba port of the former libdistance.pyx and its C kernels. The vector

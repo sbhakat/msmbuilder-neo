@@ -11,8 +11,9 @@ dynamic = ["version"]
 description = "Statistical models for biomolecular dynamics: featurization, tICA, clustering, Markov state models and HMMs"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "LGPL-2.1-or-later"
-license-files = ["LICENSE"]
+# Parts are ported from permissively licensed code: see THIRD_PARTY_LICENSES.txt
+license = "LGPL-2.1-or-later AND BSD-3-Clause AND LicenseRef-C-Clustering-Library"
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.txt"]
 authors = [{ name = "MSMBuilder Neo contributors" }]
 keywords = ["Markov state models", "molecular dynamics", "tICA", "VAMP", "VAMPnets",
             "kinetics", "transition path theory", "hidden Markov models"]

@@ -3,6 +3,19 @@
 Changelog
 =========
 
+MSMBuilder Neo 1.0.1
+--------------------
+
+- Restore the copyright and license notices of the third-party code that
+  two modules are ported from: ``msmbuilder.cluster._kmedoids`` (C Clustering
+  Library, Michiel de Hoon) and the vector metrics of
+  ``msmbuilder.libdistance`` (Damian Eads's distance code from SciPy,
+  BSD-3-Clause). The notices are in the source files and in
+  ``THIRD_PARTY_LICENSES.txt``, which is now included in the wheel and the
+  sdist, and the package's license metadata lists all three licenses. No
+  change in behaviour.
+- The conda-forge recipe uses the v1 ``recipe.yaml`` format.
+
 MSMBuilder Neo 1.0.0
 --------------------
 
