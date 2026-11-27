@@ -42,7 +42,11 @@ sensible option for you.
 With HDF5, the dataset containing all of the trajectories is contained in a
 single file on disk. This is generally the most convenient, but can be
 unwieldy for large datasets. The transformed output of ``msmb tICA``,
-``msmb PCA``, and clustering commands is stored in HDF5 format.
+``msmb PCA``, and clustering commands is stored in HDF5 format. MSMBuilder
+Neo writes these files with h5py; the layout is unchanged, so files from
+earlier MSMBuilder versions (written with PyTables) open as before. Open a
+dataset with ``mode='a'`` to add to it, and pass ``compression='gzip'`` to
+compress the arrays you write.
 
 The ``dir-npy`` format stores the dataset as a collection of uncompressed
 numpy ``.npy`` files in a directory on disk. This is the most suitable for
@@ -50,6 +54,26 @@ large datasets, because it enables features like memory-mapped IO. The
 transformed output of ``msmb`` Featurizer commands are stored in
 ``dir-npy`` format.
 
+
+Datasets Larger than Memory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``ds.to_dask()`` returns the sequences of an ``hdf5`` or ``dir-npy`` dataset
+as lazily loaded `Dask <https://www.dask.org>`_ arrays
+(``pip install msmbuilder-neo[dask]``). Only the chunks a computation needs
+are read:
+
+.. code-block:: python
+
+    import dask.array as da
+    from msmbuilder.dataset import dataset
+
+    with dataset('features.h5') as ds:
+        X = ds.to_dask(chunks=(10000, -1))
+        means = da.concatenate(X).mean(axis=0).compute()
+
+``transform_with`` and the ``msmb`` commands already process one sequence at
+a time.
 
 Trajectory Datasets - Read only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -14,7 +14,7 @@ to the files on which it depends from previous steps.
 
 variable    | filename          | description
 ------------|-------------------|-----------------------------------------------
-meta        | meta.pandas.pickl | pandas dataframe of trajectory metadata
+meta        | meta.parquet (meta.csv without pyarrow) | pandas dataframe of trajectory metadata
 ftrajs      | ftrajs/           | trajectories of feature vectors (dihedrals, ...)
 dihed_feat  | featurizer.pickl  | featurizer object
 ttrajs      | ttrajs/           | dimensionality-reduced, tica trajectories

@@ -151,13 +151,43 @@ def itertrajs(meta, stride=1):
                          check_topology=False)
 
 
-def load_meta(meta_fn='meta.pandas.pickl'):
+# Metadata files, in the order load_meta looks for them
+_META_DEFAULTS = ('meta.parquet', 'meta.csv', 'meta.pandas.pickl')
+_CSV_HEADER = '# msmbuilder metadata, index levels: '
+
+
+def _parquet_available():
+    for engine in ('pyarrow', 'fastparquet'):
+        try:
+            __import__(engine)
+            return True
+        except ImportError:
+            pass
+    return False
+
+
+def _meta_format(fn):
+    lower = fn.lower()
+    if lower.endswith(('.parquet', '.pq')):
+        return 'parquet'
+    if lower.endswith(('.csv', '.csv.gz')):
+        return 'csv'
+    if lower.endswith(('.pickl', '.pkl', '.pickle')):
+        return 'pickle'
+    raise ValueError('Cannot tell the metadata format of %r: use a .parquet, .csv or '
+                     '.pickl filename' % fn)
+
+
+def load_meta(meta_fn=None):
     """Load metadata associated with a project.
 
     Parameters
     ----------
-    meta_fn : str
-        The filename
+    meta_fn : str, optional
+        The filename; the format follows the extension (``.parquet``,
+        ``.csv`` or the legacy pickle ``.pickl``). By default the first of
+        ``meta.parquet``, ``meta.csv`` and ``meta.pandas.pickl`` that exists
+        is loaded.
 
     Returns
     -------
@@ -165,21 +195,71 @@ def load_meta(meta_fn='meta.pandas.pickl'):
         Pandas DataFrame where each row contains metadata for a
         trajectory.
     """
+    if meta_fn is None:
+        found = [fn for fn in _META_DEFAULTS if os.path.exists(fn)]
+        if not found:
+            raise FileNotFoundError('No metadata file found (looked for %s)'
+                                    % ', '.join(_META_DEFAULTS))
+        meta_fn = found[0]
+    fmt = _meta_format(meta_fn)
+    if fmt == 'parquet':
+        return pd.read_parquet(meta_fn)
+    if fmt == 'csv':
+        with open(meta_fn) as f:
+            first = f.readline()
+            n_index = 1
+            if first.startswith(_CSV_HEADER):
+                n_index = int(first[len(_CSV_HEADER):])
+            else:
+                f.seek(0)
+            meta = pd.read_csv(f, index_col=list(range(n_index)))
+        if n_index == 1 and meta.index.name == 'index':
+            meta.index.name = None
+        return meta
+    # the legacy format; pickles can run code, so only load trusted files
     return pd.read_pickle(meta_fn)
 
 
-def save_meta(meta, meta_fn='meta.pandas.pickl'):
+def save_meta(meta, meta_fn=None):
     """Save metadata associated with a project.
 
     Parameters
     ----------
     meta : pd.DataFrame
         The DataFrame of metadata
+    meta_fn : str, optional
+        The filename; the format follows the extension. By default
+        ``meta.parquet`` when a Parquet engine (pyarrow, from
+        ``pip install msmbuilder-neo[parquet]``) is installed, otherwise
+        ``meta.csv``. Parquet keeps every column's type exactly; CSV keeps
+        numbers and strings (and the index) but stores other types as text.
+        ``.pickl`` still writes the legacy pickle.
+
+    Returns
+    -------
     meta_fn : str
-        The filename
+        The file written.
     """
+    if meta_fn is None:
+        meta_fn = 'meta.parquet' if _parquet_available() else 'meta.csv'
+    fmt = _meta_format(meta_fn)
     backup(meta_fn)
-    pd.to_pickle(meta, meta_fn)
+    if fmt == 'parquet':
+        meta.to_parquet(meta_fn)
+    elif fmt == 'csv':
+        with open(meta_fn, 'w', newline='') as f:
+            f.write('%s%d\n' % (_CSV_HEADER, meta.index.nlevels))
+            meta.to_csv(f, index=True, index_label=_index_labels(meta))
+    else:
+        pd.to_pickle(meta, meta_fn)
+    return meta_fn
+
+
+def _index_labels(meta):
+    names = list(meta.index.names)
+    if meta.index.nlevels == 1 and names[0] is None:
+        return ['index']
+    return [n if n is not None else 'level_%d' % i for i, n in enumerate(names)]
 
 
 def render_meta(meta, fn="meta.pandas.html",
@@ -299,7 +379,7 @@ def save_trajs(trajs, fn, meta, key_to_path=None):
         np.save(npy_fn, v)
 
 
-def load_trajs(fn, meta='meta.pandas.pickl', key_to_path=None):
+def load_trajs(fn, meta=None, key_to_path=None):
     """Load trajectory-like data
 
     Data is expected to be stored as if saved by ``save_trajs``.
@@ -315,9 +395,10 @@ def load_trajs(fn, meta='meta.pandas.pickl', key_to_path=None):
     fn : str
         Where the data is saved. This should be a directory containing
         one file per trajectory.
-    meta : pd.DataFrame or str
+    meta : pd.DataFrame or str, optional
         The DataFrame of metadata. If this is a string, it is interpreted
-        as a filename and the dataframe is loaded from disk.
+        as a filename and the dataframe is loaded from disk; by default it
+        is found as in :func:`load_meta`.
 
     Returns
     -------
@@ -333,7 +414,7 @@ def load_trajs(fn, meta='meta.pandas.pickl', key_to_path=None):
     if key_to_path is None:
         key_to_path = default_key_to_path
 
-    if isinstance(meta, str):
+    if meta is None or isinstance(meta, str):
         meta = load_meta(meta_fn=meta)
     trajs = {}
     for k in meta.index:

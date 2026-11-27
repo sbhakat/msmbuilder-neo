@@ -5,6 +5,8 @@ Meta
 ----
 depends:
   - ftrajs
+  - meta.parquet
+  - meta.csv
   - meta.pandas.pickl
 """
 

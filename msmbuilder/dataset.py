@@ -15,14 +15,12 @@ from collections.abc import Sequence
 from datetime import datetime
 from os.path import join, exists, expanduser
 
+import h5py
 import mdtraj as md
 import numpy as np
-import tables
 from mdtraj.core.trajectory import _parse_topology
 
 from . import version
-
-_PYTABLES_DISABLE_COMPRESSION = tables.Filters(complevel=0)
 
 __all__ = ['dataset']
 
@@ -52,7 +50,11 @@ def dataset(path, mode='r', fmt=None, verbose=False, **kwargs):
             A directory of binary numpy files, one file per sequence
 
         ``hdf5``
-            A single hdf5 file with each sequence as an array node
+            A single HDF5 file with each sequence as an array node,
+            written with h5py. Files written by earlier MSMBuilder versions
+            (with PyTables) open unchanged, and files written now open in
+            them. Pass ``compression='gzip'`` (or 'lzf') to compress new
+            arrays.
 
         ``mdtraj``
             A read-only set of trajectory files that can be loaded
@@ -73,7 +75,7 @@ def dataset(path, mode='r', fmt=None, verbose=False, **kwargs):
     elif fmt == 'mdtraj':
         return MDTrajDataset(path, mode=mode, verbose=verbose, **kwargs)
     elif fmt == 'hdf5':
-        return HDF5Dataset(path, mode=mode, verbose=verbose)
+        return HDF5Dataset(path, mode=mode, verbose=verbose, **kwargs)
     elif fmt.endswith("-union"):
         raise ValueError("union datasets have been removed. "
                          "Please use msmbuilder.featurizer.FeatureUnion")
@@ -153,6 +155,44 @@ class _BaseDataset(Sequence):
         if previous:
             val += self._PREV_TEMPLATE.format(previous=previous)
         return val
+
+    def _lazy(self, key):
+        """An array-like for sequence ``key`` that reads only the slices
+        asked for (used by :meth:`to_dask`)."""
+        raise NotImplementedError('%s datasets do not support lazy loading'
+                                  % type(self).__name__)
+
+    def to_dask(self, chunks='auto'):
+        """The sequences as a list of lazily loaded Dask arrays.
+
+        Nothing is read until the arrays are computed, and then only the
+        chunks needed, so datasets larger than memory can be reduced,
+        sliced or fed to estimators with ``partial_fit`` chunk by chunk.
+
+        Parameters
+        ----------
+        chunks : str, int, tuple, default='auto'
+            Dask chunk specification for each array (see
+            ``dask.array.from_array``).
+
+        Returns
+        -------
+        arrays : list of dask.array.Array
+            One per sequence, in ``keys()`` order. For HDF5 datasets, keep
+            the dataset open while computing them.
+
+        Notes
+        -----
+        Needs Dask: ``pip install msmbuilder-neo[dask]``.
+        """
+        try:
+            import dask.array as da
+        except ImportError as e:
+            raise ImportError('to_dask needs Dask. Install it with "pip install dask" '
+                              'or "pip install msmbuilder-neo[dask]".') from e
+        return [da.from_array(self._lazy(key), chunks=chunks, lock=True,
+                              name='msmbuilder-%s-%d' % (os.path.abspath(str(self.path)), key))
+                for key in self.keys()]
 
     def fit_with(self, estimator):
         """Call the fit method of the estimator on this dataset
@@ -317,6 +357,9 @@ class NumpyDirDataset(_BaseDataset):
         except OSError as e:
             raise IndexError(e)
 
+    def _lazy(self, key):
+        return self.get(key, mmap=True)
+
     def set(self, i, x):
         if self.mode not in 'wa':
             raise OSError('Dataset not opened for writing')
@@ -347,71 +390,100 @@ class NumpyDirDataset(_BaseDataset):
 
 
 class HDF5Dataset(_BaseDataset):
+    """Sequences stored as arrays ``arr_<key>`` in one HDF5 file (h5py).
+
+    The layout is the one earlier MSMBuilder versions wrote with PyTables:
+    one array per sequence under the root group, and the provenance text in
+    the root attribute ``provenance``. Existing files open unchanged, and
+    files written here open in earlier versions.
+
+    Parameters
+    ----------
+    path : str
+    mode : {'r', 'w', 'a'}
+        Read, create (the file must not exist), or append (create if
+        missing). In 'w' and 'a' modes existing keys are overwritten.
+    verbose : bool
+    compression : str, optional
+        h5py compression filter for new arrays, e.g. 'gzip' or 'lzf'.
+    """
     _ITEM_FORMAT = 'arr_%d'
-    _ITEM_RE = re.compile(r'arr_(\d+)')
+    _ITEM_RE = re.compile(r'arr_(\d+)$')
 
-    def __init__(self, path, mode='r', verbose=False):
-        if mode not in ('r', 'w'):
-            raise ValueError('mode must be one of "r", "w"')
-        if mode == 'w':
-            if exists(path):
-                raise ValueError('File exists: %s' % path)
-
-        self._handle = tables.open_file(path, mode=mode,
-                                        filters=_PYTABLES_DISABLE_COMPRESSION)
+    def __init__(self, path, mode='r', verbose=False, compression=None):
+        if mode not in ('r', 'w', 'a'):
+            raise ValueError('mode must be one of "r", "w", "a"')
+        if mode == 'w' and exists(path):
+            raise ValueError('File exists: %s' % path)
         self.path = path
         self.mode = mode
         self.verbose = verbose
-
-        if mode == 'w':
+        self.compression = compression
+        self._open()
+        if mode == 'w' or (mode == 'a' and 'provenance' not in self._handle.attrs):
             self._write_provenance()
 
+    def _open(self):
+        h5mode = {'r': 'r', 'w': 'w-', 'a': 'a'}[self.mode]
+        self._handle = h5py.File(self.path, h5mode)
+
     def __getstate__(self):
-        # pickle does not like to pickle the pytables handle, so...
-        # self.flush()
-        return {'path': self.path, 'mode': self.mode, 'verbose': self.verbose}
+        # h5py file handles cannot be pickled; reopen on unpickling
+        return {'path': self.path, 'mode': self.mode, 'verbose': self.verbose,
+                'compression': self.compression}
 
     def __setstate__(self, state):
-        self.path = state['path']
-        self.mode = state['mode']
-        self.verbose = state['verbose']
-        self._handle = tables.open_file(self.path, mode=self.mode,
-                                        filters=_PYTABLES_DISABLE_COMPRESSION)
+        self.__dict__.update(state)
+        if self.mode == 'w':
+            self.mode = 'a'     # the file exists now
+        self._open()
 
     def get(self, i, mmap=False):
-        return self._handle.get_node('/', self._ITEM_FORMAT % i)[:]
+        try:
+            node = self._handle[self._ITEM_FORMAT % i]
+        except KeyError:
+            raise IndexError('no sequence %r in %s' % (i, self.path)) from None
+        if self.verbose:
+            print('[HDF5Dataset] loading %s/%s' % (self.path, node.name))
+        return node[()]
+
+    def _lazy(self, key):
+        return self._handle[self._ITEM_FORMAT % key]
 
     def keys(self):
-        nodes = self._handle.list_nodes('/')
-        for node in sorted(nodes, key=lambda x: _keynat(x.name)):
-            match = self._ITEM_RE.match(node.name)
-            if match:
-                yield int(match.group(1))
+        names = [n for n in self._handle.keys() if self._ITEM_RE.match(n)]
+        for name in sorted(names, key=_keynat):
+            yield int(self._ITEM_RE.match(name).group(1))
 
     def set(self, i, x):
-        if 'w' not in self.mode:
+        if self.mode not in ('w', 'a'):
             raise OSError('Dataset not opened for writing')
-
-        try:
-            self._handle.create_carray('/', self._ITEM_FORMAT % i, obj=x)
-        except tables.exceptions.NodeError:
-            self._handle.remove_node('/', self._ITEM_FORMAT % i)
-            self.set(i, x)
+        name = self._ITEM_FORMAT % i
+        if name in self._handle:
+            del self._handle[name]
+        x = np.asarray(x)
+        kwargs = {}
+        if self.compression is not None and x.size > 0:
+            kwargs = dict(compression=self.compression, chunks=True)
+        self._handle.create_dataset(name, data=x, **kwargs)
 
     @property
     def provenance(self):
-        try:
-            return self._handle.root._v_attrs['provenance']
-        except KeyError:
+        value = self._handle.attrs.get('provenance')
+        if value is None:
             return 'No available provenance'
+        if isinstance(value, bytes):
+            value = value.decode('utf-8', 'replace')
+        return str(value)
 
     def _write_provenance(self, previous=None, comments=''):
         p = self._build_provenance(previous=previous, comments=comments)
-        self._handle.root._v_attrs['provenance'] = p
+        self._handle.attrs['provenance'] = p
 
     def close(self):
-        if hasattr(self, '_handle'):
-            self._handle.close()
+        handle = getattr(self, '_handle', None)
+        if handle is not None and handle.id.valid:
+            handle.close()
 
     def flush(self):
         self._handle.flush()

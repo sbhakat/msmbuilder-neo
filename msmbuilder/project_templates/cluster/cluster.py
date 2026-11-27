@@ -6,6 +6,8 @@ Meta
 ----
 depends:
  - ttrajs
+ - meta.parquet
+ - meta.csv
  - meta.pandas.pickl
 """
 from msmbuilder.io import load_trajs, save_trajs, save_generic

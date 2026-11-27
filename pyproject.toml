@@ -38,7 +38,7 @@ dependencies = [
     # Numba/llvmlite stopped publishing Intel-macOS wheels after 0.62; keep
     # Intel Macs on the last release that has them (needs NumPy < 2.4).
     "numba<0.63; sys_platform == 'darwin' and platform_machine == 'x86_64'",
-    "tables>=3.8",
+    "h5py>=3.8",
     "fastcluster",
     "jinja2",
     "pyyaml",
@@ -52,7 +52,14 @@ mdanalysis = ["MDAnalysis>=2.7"]
 torch = ["torch>=2.2"]
 # TRAM, OOMReweightedMSM, ck_test, to_deeptime/from_deeptime (msmbuilder.msm)
 deeptime = ["deeptime>=0.4"]
+# Dataset.to_dask(): lazily loaded datasets larger than memory
+dask = ["dask[array]>=2023.1"]
+# Parquet project metadata (save_meta writes CSV without it)
+parquet = ["pyarrow>=12"]
 test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels", "deeptime>=0.4",
+        "dask[array]>=2023.1", "pyarrow>=12",
+        # only to check that datasets written by earlier versions (PyTables) open
+        "tables>=3.8",
         # MDAnalysis has no Linux aarch64 wheels before Python 3.13; its tests
         # skip themselves where it is not installed.
         "MDAnalysis>=2.7; platform_machine != 'aarch64' or python_version >= '3.13'"]
