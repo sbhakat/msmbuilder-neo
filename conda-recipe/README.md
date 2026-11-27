@@ -29,11 +29,14 @@ sdist, and passes its tests: imports on Python 3.10 and the newest Python,
 - `run_constraints: msmbuilder <0.0a0`: the original `msmbuilder` package on
   conda-forge installs the same `msmbuilder` module and `msmb` command, so
   conda refuses to install the two together.
+- Two patches are applied to the 1.0.1 sdist:
+  `0001-...` drops the PyPI-only `numba<0.63` pin for Intel macOS (conda-forge
+  has current Numba for `osx-64`; the pin also made `pip check` fail there), and
+  `0002-...` makes `tools/list_package_files.py` print `/`-separated paths, so
+  Windows builds install files into their packages (fixed upstream after
+  1.0.1; drop this patch for the next release).
 - `pip check` runs as a script test with `netcdf4` added: conda-forge's
   `mdtraj` declares netcdf4 in its Python metadata without depending on it.
-- The PyPI wheel pins `numba<0.63` on Intel macOS because PyPI has no newer
-  Intel-macOS wheels; conda-forge builds Numba for `osx-64`, so the recipe
-  does not need that pin.
 - For a new release: update `version` and `sha256` (from
   `https://pypi.org/pypi/msmbuilder-neo/<version>/json`), or let the
   feedstock's bot do it.
