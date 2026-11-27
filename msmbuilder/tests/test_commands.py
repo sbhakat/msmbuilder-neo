@@ -239,3 +239,19 @@ def test_convert_chunked_project_1():
         assert set(record.keys()) == {'filename', 'chunks'}
         assert record['filename'] == 'traj-00000000.dcd'
         assert sorted(glob.glob('%s/*.dcd' % root)) == record['chunks']
+
+
+def test_vamp_command():
+    from msmbuilder.decomposition import VAMP
+    rs = np.random.RandomState(0)
+    seqs = [np.cumsum(rs.randn(300, 3), axis=0) for _ in range(3)]
+    with tempdir():
+        with dataset('features', mode='w', fmt='dir-npy') as ds:
+            for i, s in enumerate(seqs):
+                ds[i] = s
+        shell("msmb VAMP -i features -o vamp.pkl -t vamp.h5 "
+              "--lag_time 2 --n_components 2")
+        model = load('vamp.pkl')
+        expected = VAMP(lag_time=2, n_components=2).fit(seqs)
+        np.testing.assert_allclose(model.singular_values_, expected.singular_values_)
+        np.testing.assert_allclose(dataset('vamp.h5')[0], expected.transform(seqs)[0])
