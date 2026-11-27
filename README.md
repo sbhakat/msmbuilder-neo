@@ -20,6 +20,10 @@ git clone https://github.com/sbhakat/msmbuilder-neo.git
 python -m pip install ./msmbuilder-neo
 ```
 
+Optional extras: `msmbuilder-neo[mdanalysis]` reads trajectories through
+MDAnalysis, and `msmbuilder-neo[torch]` enables the deep-learning estimators
+(VAMPnets, SRVs, time-lagged autoencoders).
+
 MSMBuilder Neo is pure Python: no compiler is needed to install it. The
 numerical kernels are compiled on first use by [Numba](https://numba.pydata.org)
 (this takes a few seconds once; the result is cached), and RMSD calculations
