@@ -1,6 +1,6 @@
 project(
   'msmbuilder-neo',
-  version: '1.0.0',
+  version: '1.0.1',
   license: 'LGPL-2.1-or-later',
   meson_version: '>= 1.4.0',
 )
