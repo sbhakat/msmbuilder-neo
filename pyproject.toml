@@ -47,7 +47,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels", "deeptime>=0.4"]
+mdanalysis = ["MDAnalysis>=2.7"]
+test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels", "deeptime>=0.4",
+        # MDAnalysis has no Linux aarch64 wheels before Python 3.13; its tests
+        # skip themselves where it is not installed.
+        "MDAnalysis>=2.7; platform_machine != 'aarch64' or python_version >= '3.13'"]
 # Bayesian rate-matrix sampling needs pyhmc, which is not maintained on PyPI.
 # Install it separately: pip install git+https://github.com/bojunliu0818/pyhmc.git
 

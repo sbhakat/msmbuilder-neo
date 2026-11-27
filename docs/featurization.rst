@@ -30,6 +30,48 @@ Featurizations
     SuperposeFeaturizer
 
 
+Reading trajectories with MDAnalysis
+------------------------------------
+
+Featurizers work on MDTraj trajectories. To featurize trajectories that
+MDTraj cannot read, such as a GROMACS ``.tpr`` or AMBER ``prmtop`` topology,
+or a trajectory too large to fit in memory, read them with `MDAnalysis
+<https://www.mdanalysis.org>`_ and featurize them chunk by chunk. Install the
+optional dependency with ``pip install msmbuilder-neo[mdanalysis]``.
+
+.. code-block:: python
+
+    import MDAnalysis as mda
+    from msmbuilder.featurizer import DihedralFeaturizer
+    from msmbuilder.io.mdanalysis import featurize_mdanalysis
+
+    universes = [mda.Universe('topol.tpr', 'run%d.xtc' % i) for i in range(10)]
+    features = featurize_mdanalysis(DihedralFeaturizer(), universes, chunk=1000)
+
+Only ``chunk`` frames are held in memory at a time, and ``features`` is a list
+with one array per trajectory, as from ``featurizer.transform``. Pass an
+``AtomGroup`` (for example ``u.select_atoms('protein')``) to featurize a
+subset of atoms. Coordinates are converted from Angstrom to nm, and the
+topology is converted so that atom names, residues, elements and bonds match
+what ``md.load`` gives for the same system.
+
+``iter_mdanalysis`` yields the MDTraj chunks themselves, and
+``load_mdanalysis`` loads a whole trajectory at once.
+
+Chunking does not change the features, because every featurizer computes
+each frame independently. The one small exception is
+:class:`~msmbuilder.featurizer.SASAFeaturizer`: MDTraj's SASA calculation can
+differ by about 0.1% for the first frames of a chunk.
+
+.. autosummary::
+    :toctree: _featurization/
+
+    msmbuilder.io.mdanalysis.featurize_mdanalysis
+    msmbuilder.io.mdanalysis.iter_mdanalysis
+    msmbuilder.io.mdanalysis.load_mdanalysis
+    msmbuilder.io.mdanalysis.mdanalysis_topology
+
+
 Alternative to Featurization
 ----------------------------
 
