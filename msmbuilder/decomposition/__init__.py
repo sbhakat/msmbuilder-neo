@@ -8,7 +8,7 @@ from .sparsetica import SparseTICA
 from .ksparsetica import KSparseTICA
 from .tica import tICA
 from .vamp import VAMP
-from .deep import VAMPNet, SRV, TimeLaggedAutoencoder
+from .deep import VAMPNet, SRV, TimeLaggedAutoencoder, DeepTICA, DeepLDA
 
 
 class FastICA(MultiSequenceDecompositionMixin, _decomposition.FastICA):

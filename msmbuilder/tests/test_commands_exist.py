@@ -102,6 +102,7 @@ def get_all():
                          ]),
         get_from_module(msmbuilder.decomposition,
                         exclude=['MultiSequenceDecompositionMixin',
+                                 'DeepLDA',  # supervised: needs per-frame labels
                                  ],
                         include=['tICA']),
         get_from_module(msmbuilder.msm, )

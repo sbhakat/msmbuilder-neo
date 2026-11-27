@@ -78,7 +78,7 @@ by deeptime [#f7]_, and its tests check it against deeptime.
 Deep learning (optional)
 ------------------------
 
-Three neural-network estimators learn slow collective variables that are
+Five neural-network estimators learn collective variables that are
 nonlinear functions of the input features. They need PyTorch
 (``pip install msmbuilder-neo[torch]``) and follow the same API as the other
 decomposition methods, so they work in pipelines and cross-validation.
@@ -91,6 +91,19 @@ decomposition methods, so they work in pipelines and cross-validation.
   with ``eigenvalues_`` and ``timescales_``, like a nonlinear tICA.
 * :class:`TimeLaggedAutoencoder` [#f10]_ compresses x(t) through a bottleneck
   and is trained to predict x(t + lag); ``transform`` returns the bottleneck.
+* :class:`DeepTICA` [#f11]_ trains a network so that TICA of its outputs has
+  the largest eigenvalues, and returns the slowest TICA projections. It can
+  learn from biased simulations (metadynamics, OPES): pass per-frame
+  ``logweights`` (typically ``beta * bias``) to ``fit``, and pairs are then
+  found in the rescaled time, as in [#f11]_.
+* :class:`DeepLDA` [#f12]_ is supervised: from frames labelled by state (for
+  example short runs in each metastable state) it learns the projections that
+  best separate the states. ``fit(sequences, y)`` takes one label per
+  sequence, or one per frame.
+
+DeepTICA and DeepLDA use the definitions of the mlcolvar package [#f13]_
+(losses, regularizations, output normalization and reweighting); the test
+suite checks them against mlcolvar, which is not needed to use them.
 
 .. code-block:: python
 
@@ -102,11 +115,26 @@ decomposition methods, so they work in pipelines and cross-validation.
     print(srv.timescales_)
     print(srv.score(test_features))    # VAMP-2 on held-out data
 
-For all three, ``score`` fits a linear VAMP model to the training embedding
-and returns its VAMP-2 score on the embedding of new data, so architectures,
-lag times and estimators can be compared on the same scale. Set
-``random_state`` for reproducible fits, and ``device='cuda'`` (or ``'mps'``)
-to train on a GPU.
+For the unsupervised estimators, ``score`` fits a linear VAMP model to the
+training embedding and returns its VAMP-2 score on the embedding of new data,
+so architectures, lag times and estimators can be compared on the same scale
+(for DeepLDA, ``score(sequences, y)`` measures how well labelled states are
+separated). Set ``random_state`` for reproducible fits, and ``device='cuda'``
+(or ``'mps'``) to train on a GPU.
+
+Every fitted network can be saved as TorchScript, with the input
+standardization and output rotation built in, to bias the learned collective
+variables in PLUMED with its ``PYTORCH_MODEL`` action:
+
+.. code-block:: python
+
+    from msmbuilder.decomposition import DeepTICA
+
+    cv = DeepTICA(n_components=1, lag_time=5, hidden_layers=(30, 30))
+    cv.fit(features, logweights=[beta * bias for bias in biases])
+    cv.to_torchscript("deeptica.ptc")
+
+PLUMED must compute the same input features, in the same order.
 
 
 PCA
@@ -129,6 +157,8 @@ Algorithms
     VAMPNet
     SRV
     TimeLaggedAutoencoder
+    DeepTICA
+    DeepLDA
     SparseTICA
     PCA
 
@@ -227,5 +257,8 @@ References
 .. [#f8] Mardt, Andreas, et al. VAMPnets for deep learning of molecular kinetics. Nat. Commun. 9 (2018): 5.
 .. [#f9] Chen, Wei, Hythem Sidky, and Andrew L. Ferguson. Nonlinear discovery of slow molecular modes using state-free reversible VAMPnets. J. Chem. Phys. 150 (2019): 214114.
 .. [#f10] Wehmeyer, Christoph, and Frank Noé. Time-lagged autoencoders: Deep learning of slow collective variables for molecular kinetics. J. Chem. Phys. 148 (2018): 241703.
+.. [#f11] Bonati, Luigi, GiovanniMaria Piccini, and Michele Parrinello. Deep learning the slow modes for rare events sampling. Proc. Natl. Acad. Sci. USA 118 (2021): e2113533118.
+.. [#f12] Bonati, Luigi, Valerio Rizzi, and Michele Parrinello. Data-driven collective variables for enhanced sampling. J. Phys. Chem. Lett. 11 (2020): 2998-3004.
+.. [#f13] Bonati, Luigi, Enrico Trizio, Andrea Rizzi, and Michele Parrinello. A unified framework for machine learning collective variables for enhanced sampling simulations: mlcolvar. J. Chem. Phys. 159 (2023): 014801.
 
 .. vim: tw=75

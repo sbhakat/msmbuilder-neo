@@ -21,7 +21,7 @@ from ..preprocessing import Butterworth, DoubleEWMA
 from ..decomposition import (tICA, SparseTICA, FastICA, FactorAnalysis,
                              KernelTICA, PCA, SparsePCA, MiniBatchSparsePCA,
                              KSparseTICA, VAMP, VAMPNet, SRV,
-                             TimeLaggedAutoencoder)
+                             TimeLaggedAutoencoder, DeepTICA)
 from ..cluster import (KMeans, KCenters, KMedoids, MiniBatchKMedoids,
                        MiniBatchKMeans, RegularSpatial, LandmarkAgglomerative,
                        GMM, MeanShift, NDGrid, SpectralClustering,
@@ -204,6 +204,11 @@ class SRVCommand(_DeepCommand):
 
 class TimeLaggedAutoencoderCommand(_DeepCommand):
     klass = TimeLaggedAutoencoder
+    _concrete = True
+
+
+class DeepTICACommand(_DeepCommand):
+    klass = DeepTICA
     _concrete = True
 
 
