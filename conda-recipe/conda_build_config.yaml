@@ -1,3 +1,0 @@
-# MSMBuilder Neo needs Python 3.10 or newer (conda-forge's default python_min is lower)
-python_min:
-  - "3.10"
