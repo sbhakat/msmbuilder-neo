@@ -7,8 +7,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/msmbuilder_neo-{{ version }}.tar.gz
-  # sha256 of the sdist on PyPI (fill in after the release: see README.md)
-  sha256: REPLACE_WITH_SHA256_OF_THE_PYPI_SDIST
+  sha256: c6a59c592d4c9d50fdb1f9970e040d474c295c09fe654e0bdb8b16bf1edd320a
 
 build:
   noarch: python
@@ -44,6 +43,9 @@ test:
   requires:
     - python {{ python_min }}
     - pip
+    # conda-forge's mdtraj declares netcdf4 in its Python metadata but does not
+    # depend on it, which makes `pip check` fail; netcdf4 is not needed by us
+    - netcdf4
   imports:
     - msmbuilder
     - msmbuilder.msm
