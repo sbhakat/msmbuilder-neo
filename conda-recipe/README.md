@@ -7,12 +7,15 @@ every new PyPI release.
 
 ## Submitting
 
-1. Get the checksum of the released sdist and put it into `meta.yaml`:
+1. `meta.yaml` already has the checksum of the 1.0.0 sdist on PyPI. For a
+   later version, update `version` and `sha256`:
 
    ```bash
-   curl -sL https://pypi.org/pypi/msmbuilder-neo/1.0.0/json \
+   curl -sL https://pypi.org/pypi/msmbuilder-neo/<version>/json \
      | python -c "import json,sys; print([u['digests']['sha256'] for u in json.load(sys.stdin)['urls'] if u['packagetype']=='sdist'][0])"
    ```
+
+   (After the feedstock exists, conda-forge's bot does this automatically.)
 
 2. Fork `conda-forge/staged-recipes`, copy this directory to
    `recipes/msmbuilder-neo/`, and open a pull request. Its CI builds the
@@ -21,6 +24,10 @@ every new PyPI release.
 
 3. The recipe maintainer listed in `meta.yaml` (`sbhakat`) must comment on
    the pull request to confirm being a maintainer.
+
+The recipe was built and tested locally with conda-build against
+conda-forge (osx-arm64): it builds the noarch package from the PyPI sdist
+and passes its import, `pip check` and `msmb -h` tests.
 
 Notes
 
