@@ -20,7 +20,8 @@ from ..preprocessing import StandardScaler, RobustScaler
 from ..preprocessing import Butterworth, DoubleEWMA
 from ..decomposition import (tICA, SparseTICA, FastICA, FactorAnalysis,
                              KernelTICA, PCA, SparsePCA, MiniBatchSparsePCA,
-                             KSparseTICA, VAMP)
+                             KSparseTICA, VAMP, VAMPNet, SRV,
+                             TimeLaggedAutoencoder)
 from ..cluster import (KMeans, KCenters, KMedoids, MiniBatchKMedoids,
                        MiniBatchKMeans, RegularSpatial, LandmarkAgglomerative,
                        GMM, MeanShift, NDGrid, SpectralClustering,
@@ -179,6 +180,31 @@ class VAMPCommand(FitTransformCommand):
     _concrete = True
     _group = '3-Decomposition'
     _transformed_fmt = 'hdf5'
+
+
+class _DeepCommand(FitTransformCommand):
+    # Neural-network estimators (need PyTorch at fit time).
+    _group = '3-Decomposition'
+    _transformed_fmt = 'hdf5'
+
+    def _hidden_layers_type(self, value):
+        """--hidden_layers 64,64 (comma- or space-separated layer sizes)."""
+        return tuple(int(v) for v in value.replace(',', ' ').split())
+
+
+class VAMPNetCommand(_DeepCommand):
+    klass = VAMPNet
+    _concrete = True
+
+
+class SRVCommand(_DeepCommand):
+    klass = SRV
+    _concrete = True
+
+
+class TimeLaggedAutoencoderCommand(_DeepCommand):
+    klass = TimeLaggedAutoencoder
+    _concrete = True
 
 
 class SparseTICACommand(FitTransformCommand):

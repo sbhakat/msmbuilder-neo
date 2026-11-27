@@ -48,6 +48,8 @@ dependencies = [
 
 [project.optional-dependencies]
 mdanalysis = ["MDAnalysis>=2.7"]
+# VAMPNet, SRV and TimeLaggedAutoencoder (msmbuilder.decomposition.deep)
+torch = ["torch>=2.2"]
 test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels", "deeptime>=0.4",
         # MDAnalysis has no Linux aarch64 wheels before Python 3.13; its tests
         # skip themselves where it is not installed.

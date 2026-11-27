@@ -75,6 +75,40 @@ estimate the same quantities. The implementation follows the definitions used
 by deeptime [#f7]_, and its tests check it against deeptime.
 
 
+Deep learning (optional)
+------------------------
+
+Three neural-network estimators learn slow collective variables that are
+nonlinear functions of the input features. They need PyTorch
+(``pip install msmbuilder-neo[torch]``) and follow the same API as the other
+decomposition methods, so they work in pipelines and cross-validation.
+
+* :class:`VAMPNet` [#f8]_ trains a network to maximize a VAMP score of its
+  outputs. With ``output='softmax'`` the outputs are probabilities of soft
+  metastable states; with ``'linear'`` they are unconstrained slow variables.
+* :class:`SRV`, the state-free reversible VAMPnet [#f9]_, maximizes the
+  reversible VAMP-2 score and returns the learned eigenfunctions in order,
+  with ``eigenvalues_`` and ``timescales_``, like a nonlinear tICA.
+* :class:`TimeLaggedAutoencoder` [#f10]_ compresses x(t) through a bottleneck
+  and is trained to predict x(t + lag); ``transform`` returns the bottleneck.
+
+.. code-block:: python
+
+    from msmbuilder.decomposition import SRV
+
+    srv = SRV(n_components=2, lag_time=10, hidden_layers=(64, 64),
+              n_epochs=50, random_state=0)
+    slow_coordinates = srv.fit_transform(train_features)
+    print(srv.timescales_)
+    print(srv.score(test_features))    # VAMP-2 on held-out data
+
+For all three, ``score`` fits a linear VAMP model to the training embedding
+and returns its VAMP-2 score on the embedding of new data, so architectures,
+lag times and estimators can be compared on the same scale. Set
+``random_state`` for reproducible fits, and ``device='cuda'`` (or ``'mps'``)
+to train on a GPU.
+
+
 PCA
 ---
 
@@ -92,6 +126,9 @@ Algorithms
 
     tICA
     VAMP
+    VAMPNet
+    SRV
+    TimeLaggedAutoencoder
     SparseTICA
     PCA
 
@@ -187,5 +224,8 @@ References
 .. [#f5] Schwantes, Christian R., and Vijay S. Pande. `Modeling Molecular Kinetics with tICA and the Kernel Trick <http://dx.doi.org/10.1021/ct5007357>`_ J. Chem Theory Comput. 11.2 (2015): 600–608.
 .. [#f6] Wu, Hao, and Frank Noé. Variational approach for learning Markov processes from time series data. J. Nonlinear Sci. 30 (2020): 23–66.
 .. [#f7] Hoffmann, Moritz, et al. Deeptime: a Python library for machine learning dynamical models from time series data. Mach. Learn.: Sci. Technol. 3 (2022): 015009.
+.. [#f8] Mardt, Andreas, et al. VAMPnets for deep learning of molecular kinetics. Nat. Commun. 9 (2018): 5.
+.. [#f9] Chen, Wei, Hythem Sidky, and Andrew L. Ferguson. Nonlinear discovery of slow molecular modes using state-free reversible VAMPnets. J. Chem. Phys. 150 (2019): 214114.
+.. [#f10] Wehmeyer, Christoph, and Frank Noé. Time-lagged autoencoders: Deep learning of slow collective variables for molecular kinetics. J. Chem. Phys. 148 (2018): 241703.
 
 .. vim: tw=75
