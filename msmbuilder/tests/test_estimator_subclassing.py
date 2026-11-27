@@ -11,16 +11,14 @@ import msmbuilder
 import msmbuilder.base
 
 
-def silent_warnings(*args, **kwargs):
-    print(args, kwargs)
-
-
 @contextmanager
 def supress_warnings():
-    original_warn = warnings.warn
-    warnings.warn = silent_warnings
-    yield
-    warnings.warn = original_warn
+    # (This used to replace warnings.warn and restore it after the block,
+    # without try/finally: a pytest skip raised while importing a module
+    # left it replaced for every later test in the process.)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        yield
 
 
 def import_all_estimators(pkg):
@@ -34,6 +32,8 @@ def import_all_estimators(pkg):
     with supress_warnings():
         result = {}
         for _, modname, ispkg in pkgutil.iter_modules(pkg.__path__):
+            if modname in ('tests', 'scripts', 'project_templates'):
+                continue    # not library code (and test modules may skip on import)
             c = '%s.%s' % (pkg.__name__, modname)
             try:
                 mod = importlib.import_module(c)
