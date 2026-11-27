@@ -27,10 +27,29 @@ This method extends these tools, making it possible to score trained models on
 new datasets and to perform hyperparameter selection.
 
 GMRQ assumes the dynamics are reversible. For non-reversible or
-non-equilibrium data, use the VAMP score instead
-(:class:`~msmbuilder.decomposition.VAMP`), which is evaluated on held-out data
-in the same way and reduces to a closely related quantity for reversible
-dynamics.
+non-equilibrium data, use a VAMP score instead, which is evaluated on held-out
+data in the same way and reduces to a closely related quantity for reversible
+dynamics:
+
+* for features, :class:`~msmbuilder.decomposition.VAMP` (its ``score``);
+* for state decompositions, :meth:`~msmbuilder.msm.MarkovStateModel.score_vamp`.
+  Setting ``MarkovStateModel(score_method='vamp2')`` makes ``score()`` return
+  it, so scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
+  select models by VAMP-2.
+
+.. code-block:: python
+
+    from sklearn.model_selection import GridSearchCV
+    from msmbuilder.msm import MarkovStateModel
+
+    search = GridSearchCV(
+        MarkovStateModel(score_method='vamp2', n_timescales=5),
+        {'lag_time': [1, 5, 10, 20]}, cv=5)
+    search.fit(state_sequences)
+
+As with GMRQ, score with fewer dynamical modes than states (set
+``n_timescales``, or ``dim`` for ``score_vamp``): when all of them are used,
+the held-out score depends only on the test data and cannot tell models apart.
 
 Algorithms
 ----------
@@ -40,6 +59,7 @@ Algorithms
 
     decomposition.tICA.score
     decomposition.VAMP.score
+    msm.MarkovStateModel.score_vamp
     msm.MarkovStateModel.score
     msm.ContinuousTimeMSM.score
 

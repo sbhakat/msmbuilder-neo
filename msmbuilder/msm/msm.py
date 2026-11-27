@@ -17,6 +17,7 @@ import scipy.linalg
 from sklearn.utils import check_random_state
 from ..utils import list_of_1d
 from ..base import BaseEstimator
+from ..decomposition.vamp import _sym_inv_sqrt
 from ._markovstatemodel import _transmat_mle_prinz
 from .core import (_MappingTransformMixin, _CountsMSMMixin,
                    _dict_compose,
@@ -24,6 +25,10 @@ from .core import (_MappingTransformMixin, _CountsMSMMixin,
                    _solve_msm_eigensystem, _SampleMSMMixin)
 
 __all__ = ['MarkovStateModel']
+
+# Eigenvalue cut-off used when whitening for VAMP scores (deeptime's default
+# for MSM scores).
+_VAMP_EPSILON = 1e-10
 
 #-----------------------------------------------------------------------------
 # Code
@@ -77,6 +82,12 @@ class MarkovStateModel(BaseEstimator, _MappingTransformMixin,
         interval of ``lag_time``.
     verbose : bool
         Enable verbose printout
+    score_method : {'gmrq', 'vamp1', 'vamp2'}, default='gmrq'
+        What :meth:`score` and ``score_`` compute. 'gmrq' (the default) is the
+        generalized matrix Rayleigh quotient, which assumes reversible
+        dynamics. The VAMP scores (see :meth:`score_vamp`) do not; choosing
+        one here makes them available to scikit-learn model selection, which
+        calls ``score()``.
 
     References
     ----------
@@ -110,7 +121,7 @@ class MarkovStateModel(BaseEstimator, _MappingTransformMixin,
 
     def __init__(self, lag_time=1, n_timescales=None, reversible_type='mle',
                  ergodic_cutoff='on', prior_counts=0, sliding_window=True,
-                 verbose=True):
+                 verbose=True, score_method='gmrq'):
         self.reversible_type = reversible_type
         self.lag_time = lag_time
         self.n_timescales = n_timescales
@@ -118,6 +129,7 @@ class MarkovStateModel(BaseEstimator, _MappingTransformMixin,
         self.sliding_window = sliding_window
         self.verbose = verbose
         self.ergodic_cutoff = ergodic_cutoff
+        self.score_method = score_method
 
         # Keep track of whether to recalculate eigensystem
         self._is_dirty = True
@@ -384,14 +396,29 @@ Timescales:
 
     @property
     def score_(self):
-        """Training score of the model, computed as the generalized matrix,
-        Rayleigh quotient, the sum of the first `n_components` eigenvalues
+        """Training score of the model. With ``score_method='gmrq'`` (the
+        default) this is the generalized matrix Rayleigh quotient, the sum of
+        the first `n_components` eigenvalues; with a VAMP score method it is
+        that VAMP score on the training counts.
         """
+        method = self._score_method()
+        if method != 'gmrq':
+            return self.score_vamp(method=method)
         return self.eigenvalues_.sum()
+
+    def _score_method(self):
+        method = str(self.score_method).lower().replace('-', '')
+        if method not in ('gmrq', 'vamp1', 'vamp2'):
+            raise ValueError("score_method must be one of 'gmrq', 'vamp1', "
+                             "'vamp2'; got %r" % self.score_method)
+        return method
 
 
     def score(self, sequences, y=None):
         """Score the model on new data using the generalized matrix Rayleigh quotient
+
+        With ``score_method`` set to a VAMP score, this returns
+        ``score_vamp(sequences)`` instead.
 
         Parameters
         ----------
@@ -414,6 +441,10 @@ Timescales:
            of slow dynamical modes in molecular kinetics" J. Chem. Phys. 142,
            124105 (2015)
         """
+        method = self._score_method()
+        if method != 'gmrq':
+            return self.score_vamp(sequences, method=method)
+
         # eigenvectors from the model we're scoring, `self`
         V = self.right_eigenvectors_
 
@@ -439,6 +470,101 @@ Timescales:
             trace = np.nan
 
         return trace
+
+    def _empirical_koopman(self):
+        """Singular value decomposition of the MSM's Koopman operator in the
+        empirical distribution of the training counts (as in deeptime's
+        ``MarkovStateModel.empirical_koopman_model``)."""
+        C = np.asarray(self.countsmat_, dtype=float)
+        cov_00 = np.diag(C.sum(axis=1))
+        cov_tt = np.diag(C.sum(axis=0))
+        inv_00 = _sym_inv_sqrt(cov_00, _VAMP_EPSILON)
+        inv_tt = _sym_inv_sqrt(cov_tt, _VAMP_EPSILON)
+        # reweight the transition matrix to the empirical distribution
+        K = np.linalg.multi_dot([inv_00, cov_00 @ self.transmat_, inv_tt])
+        U, s, Vt = scipy.linalg.svd(K)
+        return inv_00 @ U, s, inv_tt @ Vt.T, (cov_00, C, cov_tt)
+
+    def score_vamp(self, sequences=None, method='vamp2', dim=None):
+        """VAMP score of the MSM, on its training data or on new data.
+
+        The variational approach for Markov processes (VAMP) scores how well
+        the dominant singular functions of this model describe the dynamics
+        in ``sequences``. Unlike the GMRQ (:meth:`score`), it does not assume
+        reversible dynamics, so it can compare state decompositions,
+        clusterings and lag times by cross-validation for non-equilibrium
+        data too. Higher is better.
+
+        Parameters
+        ----------
+        sequences : list of array-like, optional
+            Test data: sequences of state labels, as passed to ``fit()``.
+            Transitions are counted with this model's ``lag_time`` and
+            ``sliding_window``; labels the model does not know are ignored.
+            If None, score the model on its own training counts.
+        method : {'vamp1', 'vamp2'}, default='vamp2'
+            VAMP-r is the sum of the r-th powers of the singular values,
+            with the model's singular functions evaluated on the test counts.
+            (VAMP-E is not offered here: computed from raw transition counts
+            it grows with the amount of data. Use
+            :class:`msmbuilder.decomposition.VAMP` on one-hot state
+            indicators for a normalized VAMP-E.)
+        dim : int, optional
+            Number of singular functions to use, including the constant one.
+            Defaults to ``n_timescales + 1`` if ``n_timescales`` is set, and
+            to all ``n_states_`` otherwise. For cross-validation use fewer
+            than ``n_states_``: with all of them the held-out score no longer
+            depends on the model (as with GMRQ and ``n_timescales``).
+
+        Returns
+        -------
+        score : float
+            The VAMP score. The constant singular function contributes 1.
+
+        Notes
+        -----
+        This matches ``deeptime.markov.msm.MarkovStateModel.score``: the
+        covariances are the count-matrix row and column sums and the count
+        matrix itself, and the transition matrix is reweighted to the
+        empirical distribution.
+
+        References
+        ----------
+        .. [1] Wu, H. and Noe, F. "Variational approach for learning Markov
+           processes from time series data." J. Nonlinear Sci. 30, 23-66
+           (2020).
+        """
+        method = str(method).lower().replace('-', '')
+        if method not in ('vamp1', 'vamp2'):
+            raise ValueError("method must be 'vamp1' or 'vamp2'; got %r. VAMP-E is "
+                             "not offered for MSMs (it depends on the number of "
+                             "counts); see msmbuilder.decomposition.VAMP." % method)
+        U, s, V, train_cov = self._empirical_koopman()
+        if dim is None:
+            dim = self.n_states_ if self.n_timescales is None else self.n_timescales + 1
+        dim = min(int(dim), len(s))
+        U, s, V = U[:, :dim], s[:dim], V[:, :dim]
+
+        if sequences is None:
+            cov_00, cov_0t, cov_tt = train_cov
+        else:
+            raw, test_mapping = _transition_counts(
+                list_of_1d(sequences), int(self.lag_time),
+                sliding_window=self.sliding_window)
+            common = [label for label in self.mapping_ if label in test_mapping]
+            cov_0t = np.zeros((self.n_states_, self.n_states_))
+            if common:
+                ours = [self.mapping_[label] for label in common]
+                theirs = [test_mapping[label] for label in common]
+                cov_0t[np.ix_(ours, ours)] = np.asarray(raw, dtype=float)[np.ix_(theirs, theirs)]
+            cov_00 = np.diag(cov_0t.sum(axis=1))
+            cov_tt = np.diag(cov_0t.sum(axis=0))
+
+        A = np.atleast_2d(_sym_inv_sqrt(U.T @ cov_00 @ U, _VAMP_EPSILON))
+        B = np.atleast_2d(U.T @ cov_0t @ V)
+        Cm = np.atleast_2d(_sym_inv_sqrt(V.T @ cov_tt @ V, _VAMP_EPSILON))
+        sv = np.linalg.svd(A @ B @ Cm, compute_uv=False)
+        return float(np.sum(sv) if method == 'vamp1' else np.sum(sv ** 2))
 
     def _map_eigenvectors(self, V, other_mapping):
         self_inverse_mapping = {v: k for k, v in self.mapping_.items()}
