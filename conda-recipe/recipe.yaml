@@ -10,7 +10,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/${{ name[0] }}/${{ name }}/msmbuilder_neo-${{ version }}.tar.gz
-  sha256: REPLACE_WITH_SHA256_OF_THE_1.0.1_SDIST
+  sha256: 557d1083282e85079ade631c3dd68b29de3d4ea9bad68e8faa3572764e2d73a8
 
 build:
   number: 0

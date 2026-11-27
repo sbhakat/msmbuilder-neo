@@ -18,7 +18,7 @@ printf 'python_min:\n  - "3.10"\n' > variants.yaml       # conda-forge's global 
 rattler-build build --recipe conda-recipe/recipe.yaml -c conda-forge -m variants.yaml
 ```
 
-The 1.0.0 recipe passes the linter, builds the noarch package from the PyPI
+The recipe passes the linter, builds the noarch package from the PyPI
 sdist, and passes its tests: imports on Python 3.10 and the newest Python,
 `pip check`, and `msmb -h`.
 
