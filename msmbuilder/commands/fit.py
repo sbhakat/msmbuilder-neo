@@ -14,7 +14,7 @@ from ..dataset import dataset
 from ..utils import verbosedump
 from ..hmm import GaussianHMM
 from ..msm import (MarkovStateModel, BayesianMarkovStateModel, ContinuousTimeMSM,
-                   BayesianContinuousTimeMSM)
+                   BayesianContinuousTimeMSM, OOMReweightedMSM)
 from ..cmdline import NumpydocClassCommand, argument, exttype
 
 
@@ -64,6 +64,13 @@ class MarkovStateModelCommand(FitCommand):
             return erg
         else:
             return float(erg)
+
+
+class OOMReweightedMSMCommand(FitCommand):
+    # needs deeptime at fit time
+    klass = OOMReweightedMSM
+    _concrete = True
+    _group = 'MSM'
 
 
 class BayesianMarkovStateModelCommand(FitCommand):

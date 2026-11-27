@@ -105,7 +105,9 @@ def get_all():
                                  'DeepLDA',  # supervised: needs per-frame labels
                                  ],
                         include=['tICA']),
-        get_from_module(msmbuilder.msm, )
+        get_from_module(msmbuilder.msm,
+                        exclude=['TRAM',  # needs bias matrices
+                                 ])
     )
 
 

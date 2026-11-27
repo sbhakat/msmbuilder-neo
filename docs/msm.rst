@@ -23,6 +23,8 @@ Algorithms
 
     MarkovStateModel
     BayesianMarkovStateModel
+    OOMReweightedMSM
+    TRAM
 
 Maximum Likelihood and Bayesian Estimation
 ------------------------------------------
@@ -102,6 +104,44 @@ these competing sources of error in an automatic and practical way,
 although some partially satisfactory algorithms are available. [#f3]_
 [#f4]_
 
+Methods from deeptime (optional)
+-------------------------------
+
+With deeptime installed (``pip install msmbuilder-neo[deeptime]``), these
+deeptime methods [#f7]_ work on MSMBuilder state-label sequences and return
+MSMBuilder objects:
+
+* :class:`TRAM` [#f8]_ combines biased simulations (umbrella sampling,
+  replica exchange, ...) into unbiased free energies of the states
+  (``markov_state_energies_``, ``populations_``), free energies of each
+  thermodynamic state, and one :class:`MarkovStateModel` per thermodynamic
+  state (``msms_``). ``fit(sequences, bias_matrices, ttrajs=None)`` takes the
+  bias energy (in kT) of every frame in every thermodynamic state;
+  ``pmf`` and ``sample_weights`` reweight frames to the unbiased (or any)
+  ensemble.
+* :class:`OOMReweightedMSM` [#f9]_ is a :class:`MarkovStateModel` corrected
+  for simulations started out of equilibrium and analysed on a
+  not-quite-Markovian discretization, the usual situation for many short
+  trajectories.
+* :func:`ck_test` runs the Chapman-Kolmogorov test: models estimated at
+  longer lag times are compared with the predictions of the model at the
+  shortest one, on PCCA+ metastable sets.
+* :func:`to_deeptime` and :func:`from_deeptime` convert fitted models, to
+  use the rest of deeptime's analysis (or bring its estimators' results
+  back). Note that deeptime orders eigenvalues by modulus and MSMBuilder by
+  value, so a negative eigenvalue can shift deeptime's list of timescales.
+
+.. code-block:: python
+
+    from msmbuilder.msm import MarkovStateModel, TRAM, ck_test
+
+    tram = TRAM(lag_time=10).fit(labels, bias_matrices)
+    print(tram.populations_)           # unbiased state populations
+    print(tram.msms_[0].timescales_)   # kinetics in thermodynamic state 0
+
+    test = ck_test(MarkovStateModel(), labels, [10, 20, 40, 80], 3)
+    test.plot()                        # needs matplotlib
+
 .. todo: talk about lag time
 
 .. todo: analysis page
@@ -115,5 +155,9 @@ References
 .. [#f4] Kellogg, E. H., O. F. Lange, and D. Baker. `Evaluation and optimization of discrete state models of protein folding. <http://dx.doi.org//10.1021/jp3044303>`_ J. Phys. Chem. B 116.37 (2012): 11405-11413.
 .. [#f5] Metzner, P., F. Noe, and C. Schutte. `Estimating the sampling error: Distribution of transition matrices and functions of transition matrices for given trajectory data. <http://journals.aps.org/pre/abstract/10.1103/PhysRevE.80.021106>`_ Phys. Rev. E 80.2 (2009): 021106.
 .. [#f6] Nuske, F., et al. `Variational approach to molecular kinetics. <http://pubs.acs.org/doi/abs/10.1021/ct4009156>`_ J. Chem. Theory Comput.10.4 (2014): 1739-1752.
+
+.. [#f7] Hoffmann, M., et al. `Deeptime: a Python library for machine learning dynamical models from time series data. <https://doi.org/10.1088/2632-2153/ac3de0>`_ Mach. Learn.: Sci. Technol. 3 (2022): 015009.
+.. [#f8] Wu, H., et al. `Multiensemble Markov models of molecular thermodynamics and kinetics. <https://doi.org/10.1073/pnas.1525092113>`_ Proc. Natl. Acad. Sci. USA 113 (2016): E3221-E3230.
+.. [#f9] Nuske, F., et al. `Markov state models from short non-equilibrium simulations - Analysis and correction of estimation bias. <https://doi.org/10.1063/1.4976518>`_ J. Chem. Phys. 146 (2017): 094104.
 
 .. vim: tw=75
