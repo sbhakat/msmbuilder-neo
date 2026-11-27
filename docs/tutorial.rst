@@ -217,7 +217,9 @@ Tutorial
         according to the first dynamical eigenvector. The slowest
         processes is a transition from red states to blue.
 
-   The MSM lag-time is a parameter that cannot be optimized using :ref:`gmrq<gmrq>`.
+   The MSM lag-time is a parameter that cannot be optimized with the
+   :ref:`GMRQ or VAMP scores<model_selection>` (scores at different lag times
+   are not comparable).
    You can use the ``timescales.py`` script to check how the model timescales
    would react to changing the lag-time. We'll just use a lag-time of 5 ns.
    Remember from above that we have to keep track of units. 5 ns is 100 steps.

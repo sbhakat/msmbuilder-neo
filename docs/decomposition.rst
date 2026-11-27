@@ -214,9 +214,13 @@ There are two parameters introduced in the tICA method. The first is
 :math:`\Delta t`, which is used in the calculation of the time-lag
 correlation matrix (:math:`C^{(\Delta t)}`). The second is :math:`n`,
 which is the number of tICs to project onto when calculating distances
-between conformations. You can use :ref:`the GMRQ score<gmrq>` to choose
-these parameters. Typical values are of order nanoseconds and tens,
-respectively.
+between conformations. Typical values are of order nanoseconds and tens,
+respectively. At a fixed :math:`\Delta t`, choose :math:`n` (and the input
+features) by cross-validation with the GMRQ or a VAMP score (see
+:ref:`model_selection`). Scores computed at different lag times cannot be
+compared, so choose :math:`\Delta t` from the timescales you want to
+resolve and check that the slowest implied timescales no longer change with
+it.
 
 Drawbacks
 ~~~~~~~~~

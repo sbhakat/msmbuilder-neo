@@ -33,13 +33,15 @@ class Butterworth(MultiSequencePreprocessingMixin):
         if not isinstance(order, int):
             raise ValueError('order must be an integer')
 
-        # find nearest odd integer
-        self.width = int(np.ceil((width + 1) / 2) * 2 - 1)
-
+        # store the arguments unchanged (scikit-learn's clone requires it);
+        # the filter uses the nearest odd window width
+        self.width = width
         self.order = order
+        self.analog = analog
+        self._width = int(np.ceil((width + 1) / 2) * 2 - 1)
 
         # Use lfilter_zi to choose the initial condition of the filter.
-        self._num, self._denom = butter(self.order, 2.0 / self.width)
+        self._num, self._denom = butter(self.order, 2.0 / self._width)
         self._zi = lfilter_zi(self._num, self._denom)
 
     def partial_transform(self, sequence):
@@ -47,7 +49,7 @@ class Butterworth(MultiSequencePreprocessingMixin):
         output = np.zeros_like(sequence)
 
         for i, x in enumerate(sequence.T):
-            padded = np.r_[x[self.width - 1: 0: -1], x, x[-1: -self.width: -1]]
+            padded = np.r_[x[self._width - 1: 0: -1], x, x[-1: -self._width: -1]]
 
             # Apply the filter to the width.
             z, _ = lfilter(self._num, self._denom, padded,
@@ -60,7 +62,7 @@ class Butterworth(MultiSequencePreprocessingMixin):
             # Use filtfilt to apply the filter.
             filtered = filtfilt(self._num, self._denom, padded)
 
-            output[:, i] = filtered[(self.width - 1):-(self.width - 1)]
+            output[:, i] = filtered[(self._width - 1):-(self._width - 1)]
 
         return output
 

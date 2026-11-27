@@ -98,10 +98,18 @@ states goes up. On the other hand, the statistical error in the MSM
 because there are fewer transitions (data) per element of the transition
 probability matrix.
 
-There are no existing algorithms in the MSM literature which fully balance
-these competing sources of error in an automatic and practical way,
-although some partially satisfactory algorithms are available. [#f3]_
-[#f4]_
+Cross-validation balances the two: fit models with different numbers of
+states on some trajectories, and score them on the others with the GMRQ or a
+VAMP score (``MarkovStateModel(score_method='vamp2')``). Too few states score
+poorly because they miss slow processes; too many score poorly on new data
+because they fit noise. :ref:`model_selection` explains the scores and gives
+a complete recipe; [#f3]_ and [#f4]_ discuss other approaches.
+
+The lag time is chosen differently, because scores at different lag times
+are not comparable: plot the implied timescales against the lag time
+(:func:`~msmbuilder.msm.implied_timescales`) and use a lag time at which the
+slowest timescales have stopped changing, then check the model with a
+Chapman-Kolmogorov test (:func:`~msmbuilder.msm.ck_test`).
 
 Macrostates and representative structures
 -----------------------------------------
