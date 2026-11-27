@@ -69,9 +69,9 @@ except ImportError:
 
 from inspect import Parameter
 
-# Work around a very odd bug in pytables, where it destroys arguments in
-# sys.argv when imported
-# https://github.com/PyTables/PyTables/issues/405
+# Originally a workaround for PyTables destroying sys.argv on import
+# (https://github.com/PyTables/PyTables/issues/405); MSMBuilder no longer
+# imports PyTables, but the saved copy is still what the commands parse.
 SAVED_SYSARGV = copy.copy(sys.argv)
 
 __all__ = ['argument', 'argument_group', 'Command', 'App', 'FlagAction',

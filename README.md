@@ -24,7 +24,8 @@ Optional extras: `msmbuilder-neo[mdanalysis]` reads trajectories through
 MDAnalysis, `msmbuilder-neo[torch]` enables the deep-learning estimators
 (VAMPnets, SRVs, time-lagged autoencoders, DeepTICA and DeepLDA), and
 `msmbuilder-neo[deeptime]` adds deeptime's TRAM, OOM-reweighted MSMs and
-Chapman-Kolmogorov test.
+Chapman-Kolmogorov test, `msmbuilder-neo[dask]` loads datasets lazily, and
+`msmbuilder-neo[parquet]` stores project metadata as Parquet.
 
 MSMBuilder Neo is pure Python: no compiler is needed to install it. The
 numerical kernels are compiled on first use by [Numba](https://numba.pydata.org)

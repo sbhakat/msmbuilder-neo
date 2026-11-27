@@ -27,8 +27,7 @@ must be unique strings. The ``io`` module have a mapping from python-object keys
 to  filenames. It's important to note that
 the converse (going from filename to python object) does not need to be codified.
 That's because (in contrast to the :ref:`dataset<datasets>` approach) we persist the set
-of keys in a separate metadata file. This file is saved using python's ``pickle``
-protocol and can contain arbitrary python objects [1]_.
+of keys in a separate metadata file (see `Metadata`_) [1]_.
 
 .. [1] We don't just serialize the whole python dictionary of sequences using
        ``pickle``, because it chokes on big numpy arrays.
@@ -48,6 +47,14 @@ Per-sequence information should be persisted in a ``pandas`` ``DataFrame``.
 They ``index`` of the dataframe should be they keys used in the trajectory.
 This dataframe is required for the saving and loading functions, as it serves
 as the canonical list of keys.
+
+:func:`save_meta` writes it as Parquet (``meta.parquet``) when a Parquet
+engine is installed (``pip install msmbuilder-neo[parquet]``), and as CSV
+(``meta.csv``) otherwise; :func:`load_meta` finds whichever exists. Parquet
+keeps every column's type; CSV keeps the index, numbers and strings. The
+pickle (``meta.pandas.pickl``) written by earlier versions is still read, and
+still written if you ask for a ``.pickl`` filename, but only load pickles you
+trust: unpickling can run code.
 
 Estimators
 ----------
@@ -120,7 +127,7 @@ templates.
     Meta
     ----
     depends:
-      - meta.pandas.pickl
+      - meta.parquet
     arbitrary_key:
       - arbitrary data
 
