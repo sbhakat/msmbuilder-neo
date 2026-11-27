@@ -26,6 +26,12 @@ and training data sets to quantify and avoid statistical overfitting.
 This method extends these tools, making it possible to score trained models on
 new datasets and to perform hyperparameter selection.
 
+GMRQ assumes the dynamics are reversible. For non-reversible or
+non-equilibrium data, use the VAMP score instead
+(:class:`~msmbuilder.decomposition.VAMP`), which is evaluated on held-out data
+in the same way and reduces to a closely related quantity for reversible
+dynamics.
+
 Algorithms
 ----------
 
@@ -33,6 +39,7 @@ Algorithms
     :toctree: _gmrq/
 
     decomposition.tICA.score
+    decomposition.VAMP.score
     msm.MarkovStateModel.score
     msm.ContinuousTimeMSM.score
 

@@ -20,7 +20,7 @@ from ..preprocessing import StandardScaler, RobustScaler
 from ..preprocessing import Butterworth, DoubleEWMA
 from ..decomposition import (tICA, SparseTICA, FastICA, FactorAnalysis,
                              KernelTICA, PCA, SparsePCA, MiniBatchSparsePCA,
-                             KSparseTICA)
+                             KSparseTICA, VAMP)
 from ..cluster import (KMeans, KCenters, KMedoids, MiniBatchKMedoids,
                        MiniBatchKMeans, RegularSpatial, LandmarkAgglomerative,
                        GMM, MeanShift, NDGrid, SpectralClustering,
@@ -169,6 +169,13 @@ if RobustScaler is not None:
 
 class tICACommand(FitTransformCommand):
     klass = tICA
+    _concrete = True
+    _group = '3-Decomposition'
+    _transformed_fmt = 'hdf5'
+
+
+class VAMPCommand(FitTransformCommand):
+    klass = VAMP
     _concrete = True
     _group = '3-Decomposition'
     _transformed_fmt = 'hdf5'

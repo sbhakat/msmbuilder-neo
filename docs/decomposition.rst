@@ -44,6 +44,37 @@ trick and represents a substantial improvement in estimating the
 eigenfunctions of the transfer operator directly.
 
 
+VAMP
+----
+
+The variational approach for Markov processes (VAMP) [#f6]_ generalizes tICA to
+dynamics that are not reversible or not at equilibrium, such as driven systems,
+data from short trajectories started out of equilibrium, or non-stationary
+processes. It finds the linear combinations of input features that best
+approximate the dominant *singular* functions of the Koopman (transfer)
+operator, rather than its eigenfunctions.
+
+VAMP also provides a score that is valid without assuming reversibility. The
+VAMP-2 score is one plus the sum of the squared singular values, and it can be
+evaluated on held-out data, so it can rank featurizations, lag times and
+numbers of components by cross-validation, in the same way GMRQ does for
+reversible models (see :ref:`gmrq`). VAMP-1 and VAMP-E scores are also
+available through ``score_method``.
+
+.. code-block:: python
+
+    from msmbuilder.decomposition import VAMP
+
+    vamp = VAMP(n_components=5, lag_time=10)
+    projected = vamp.fit_transform(train_features)
+    print(vamp.singular_values_, vamp.score_)
+    test_score = vamp.score(test_features)   # VAMP-2 on held-out data
+
+For reversible, equilibrium data the VAMP singular values and tICA eigenvalues
+estimate the same quantities. The implementation follows the definitions used
+by deeptime [#f7]_, and its tests check it against deeptime.
+
+
 PCA
 ---
 
@@ -60,6 +91,7 @@ Algorithms
     :toctree: _decomposition/
 
     tICA
+    VAMP
     SparseTICA
     PCA
 
@@ -153,5 +185,7 @@ References
 .. [#f3] Naritomi, Yusuke, and Sotaro Fuchigami. `Slow dynamics in protein fluctuations revealed by time-structure based independent component analysis: The case of domain motions <http://dx.doi.org/10.1063/1.3554380>`_ J. Chem. Phys. 134.6 (2011): 065101.
 .. [#f4] McGibbon, R. T. & Pande, V. S. `Identification of simple reaction coordinates from complex dynamics <http://arxiv.org/abs/1602.08776>`_ ArXiv 16 (2016).
 .. [#f5] Schwantes, Christian R., and Vijay S. Pande. `Modeling Molecular Kinetics with tICA and the Kernel Trick <http://dx.doi.org/10.1021/ct5007357>`_ J. Chem Theory Comput. 11.2 (2015): 600–608.
+.. [#f6] Wu, Hao, and Frank Noé. Variational approach for learning Markov processes from time series data. J. Nonlinear Sci. 30 (2020): 23–66.
+.. [#f7] Hoffmann, Moritz, et al. Deeptime: a Python library for machine learning dynamical models from time series data. Mach. Learn.: Sci. Technol. 3 (2022): 015009.
 
 .. vim: tw=75

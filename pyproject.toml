@@ -47,7 +47,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels"]
+test = ["pytest>=7", "pytest-xdist", "numdifftools", "hmmlearn", "statsmodels", "deeptime>=0.4"]
 # Bayesian rate-matrix sampling needs pyhmc, which is not maintained on PyPI.
 # Install it separately: pip install git+https://github.com/bojunliu0818/pyhmc.git
 

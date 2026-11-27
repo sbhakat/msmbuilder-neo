@@ -7,6 +7,7 @@ from .pca import PCA, SparsePCA, MiniBatchSparsePCA
 from .sparsetica import SparseTICA
 from .ksparsetica import KSparseTICA
 from .tica import tICA
+from .vamp import VAMP
 
 
 class FastICA(MultiSequenceDecompositionMixin, _decomposition.FastICA):
