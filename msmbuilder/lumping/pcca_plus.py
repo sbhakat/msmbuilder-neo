@@ -1,4 +1,6 @@
 
+import inspect
+
 import numpy as np
 from numpy import dot, diag, trace as tr
 from numpy.linalg import inv, norm
@@ -20,9 +22,12 @@ class PCCAPlus(PCCA):
     do_minimization : bool, optional
         If False, skip the optimization of the transformation matrix.
         In general, minimization is recommended.
-    objective_function: {'crisp_metastablility', 'metastability',
-                         'metastability'}
+    objective_function: {'crisp_metastability', 'metastability', 'crispness'}
         Possible objective functions.  See objective for details.
+    random_state : int, RandomState or None, optional
+        Seed for the stochastic (basin-hopping) optimization.
+    method : {'msmbuilder', 'deeptime'}, default='msmbuilder'
+        'deeptime' uses PyEMMA's PCCA+ through deeptime (see Notes).
     kwargs : optional
         Additional keyword arguments to be passed to MarkovStateModel.  See
         msmbuilder.msm.MarkovStateModel for possible options.
@@ -65,6 +70,19 @@ class PCCAPlus(PCCA):
     microstate_mapping_ : ndarray
         Mapping from microstates to macrostates.
 
+    and the macrostate quantities of :class:`PCCA` (``memberships_``, which
+    is ``chi_``, ``metastable_distributions_``, ``coarse_grained_transmat_``,
+    ...). Pass ``random_state`` to make the (stochastic) optimization of
+    ``A`` reproducible.
+
+    ``method='deeptime'`` instead runs PyEMMA's PCCA+ algorithm (from
+    msmtools, now maintained in deeptime; needs
+    ``pip install msmbuilder-neo[deeptime]``), giving the same memberships
+    as ``pyemma.msm.PCCA``. Both methods find equally metastable
+    macrostates, but their optimizers can split the states near barriers
+    differently, especially with more macrostates than clear metastable
+    sets.
+
     References
     ----------
 
@@ -90,9 +108,14 @@ class PCCAPlus(PCCA):
     """
 
     def __init__(self, n_macrostates, do_minimization=True,
-                 objective_function='crisp_metastability', **kwargs):
+                 objective_function='crisp_metastability', random_state=None,
+                 method='msmbuilder', **kwargs):
 
         super().__init__(n_macrostates, **kwargs)
+        self.random_state = random_state
+        if method not in ('msmbuilder', 'deeptime'):
+            raise ValueError("method must be 'msmbuilder' or 'deeptime', got %r" % method)
+        self.method = method
         obj_functions = dict(
                 crispness=crispness,
                 metastability=metastability,
@@ -120,6 +143,19 @@ class PCCAPlus(PCCA):
             Mapping from microstates to macrostates.
 
         """
+        if self.method == 'deeptime':
+            # PyEMMA's PCCA+ (msmtools), as maintained in deeptime
+            from ..msm.deeptime_adapters import _deeptime
+            _deeptime()
+            from deeptime.markov import pcca
+            model = pcca(np.asarray(self.transmat_, dtype=float), int(self.n_macrostates),
+                         np.asarray(self.populations_, dtype=float))
+            self.A_ = None
+            self.chi_ = np.asarray(model.memberships, dtype=float)
+            self.microstate_mapping_ = np.argmax(self.chi_, 1)
+            self._finish_lumping(self.chi_)
+            return
+
         right_eigenvectors = self.right_eigenvectors_[:, :self.n_macrostates]
         index = index_search(right_eigenvectors)
 
@@ -136,6 +172,7 @@ class PCCAPlus(PCCA):
         self.A_ = fill_A(A, right_eigenvectors)
         self.chi_ = dot(right_eigenvectors, self.A_)
         self.microstate_mapping_ = np.argmax(self.chi_, 1)
+        self._finish_lumping(self.chi_)
 
     def _optimize_A(self, A):
         """Find optimal transformation matrix A by minimization.
@@ -160,13 +197,19 @@ class PCCAPlus(PCCA):
                     self.populations_
             )
 
+        # basinhopping is stochastic: seed it for reproducible lumpings
+        seed = self.random_state
+        if isinstance(seed, np.random.RandomState):
+            seed = seed.randint(2**31 - 1)
+        rng_arg = 'rng' if 'rng' in inspect.signature(
+            scipy.optimize.basinhopping).parameters else 'seed'
         alpha = scipy.optimize.basinhopping(
-                obj, alpha, niter_success=1000,
+                obj, alpha, niter_success=1000, **{rng_arg: seed}
         )['x']
 
         alpha = scipy.optimize.fmin(
                 obj, alpha, full_output=True, xtol=1E-4, ftol=1E-4,
-                maxfun=5000, maxiter=100000
+                maxfun=5000, maxiter=100000, disp=False
         )[0]
 
         if np.isneginf(obj(alpha)):

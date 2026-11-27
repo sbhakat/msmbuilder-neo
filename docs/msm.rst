@@ -104,6 +104,47 @@ these competing sources of error in an automatic and practical way,
 although some partially satisfactory algorithms are available. [#f3]_
 [#f4]_
 
+Macrostates and representative structures
+-----------------------------------------
+
+:class:`msmbuilder.lumping.PCCAPlus` (PCCA+) groups the microstates of a
+fitted MSM into metastable macrostates, as ``pyemma.msm.PCCA`` does, and
+:func:`msmbuilder.lumping.save_macrostate_samples` writes sampled
+structures of each macrostate to disk, one multi-model PDB file per
+macrostate, like PyEMMA's ``sample_by_distributions`` and ``save_trajs``:
+
+.. code-block:: python
+
+    from msmbuilder.lumping import PCCAPlus, save_macrostate_samples
+
+    pcca = PCCAPlus.from_msm(msm, n_macrostates=4, method='deeptime')
+    pcca.memberships_                 # fuzzy memberships (n_states, 4)
+    pcca.metastable_assignments_      # crisp macrostate of each microstate
+    pcca.coarse_grained_transmat_     # 4 x 4 macrostate transition matrix
+    pcca.coarse_grained_populations_  # macrostate populations
+    macro_labels = pcca.transform(labels)
+
+    save_macrostate_samples(pcca, labels, trajectory_files, n_samples=100,
+                            top='topology.pdb', stride=1, superpose='backbone',
+                            out_dir='macrostates', random_state=0)
+    # -> macrostates/macrostate_0.pdb ... macrostate_3.pdb and
+    #    macrostates/macrostate_samples.csv (trajectory, frame, microstate
+    #    and membership of every structure)
+
+Frames are drawn as in PyEMMA: a microstate from the macrostate's
+``metastable_distributions_`` (equilibrium-weighted memberships), then a
+frame of that microstate (``weighting='assignment'`` instead samples
+uniformly from the frames crisply assigned to the macrostate). Pass the
+``stride`` the trajectories were featurized with, so that frames map back to
+the trajectory files.
+
+``method='deeptime'`` runs PyEMMA's PCCA+ algorithm (through deeptime,
+``pip install msmbuilder-neo[deeptime]``) and reproduces PyEMMA's
+memberships. The default ``method='msmbuilder'`` (seed it with
+``random_state``) finds equally metastable macrostates, but its optimizer
+can assign the states near barriers differently, especially when asking for
+more macrostates than the system has clearly separated basins.
+
 Methods from deeptime (optional)
 -------------------------------
 
