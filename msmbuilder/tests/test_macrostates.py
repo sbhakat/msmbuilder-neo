@@ -204,10 +204,11 @@ def test_sampling_errors_and_empty_macrostates(sampled):
     with pytest.raises(ValueError):
         PCCAPlus(2).draw_macrostate_samples(seqs, 5)
     # sequences that only visit one macrostate: the others have no frames
-    members = pcca.metastable_label_sets_[1]
-    one = [s[np.isin(s, members)] for s in seqs]
+    k = int(np.argmax([len(lab) for lab in pcca.metastable_label_sets_]))
+    one = [s[np.isin(s, pcca.metastable_label_sets_[k])] for s in seqs]
     draws = pcca.draw_macrostate_samples(one, 10, weighting="assignment")
-    assert [len(d) for d in draws] == [0, 10, 0]
+    assert [len(d) for d in draws] == [10 if j == k else 0 for j in range(3)]
+    assert all(len(d) == 0 for d in pcca.draw_macrostate_samples([], 5))
 
 
 # --- writing structures --------------------------------------------------------------
@@ -309,14 +310,21 @@ def test_save_errors(sampled, tmp_path):
     with pytest.raises(ValueError, match="matches no atoms"):
         save_macrostate_samples(pcca, short, trajs, superpose="name XX", n_samples=2,
                                 out_dir=str(tmp_path))
-    members = pcca.metastable_label_sets_[1]
+    # frames of only one macrostate (the one most visited in these frames)
+    frames = [np.sum(np.isin(np.concatenate(short), lab)) for lab in pcca.metastable_label_sets_]
+    k = int(np.argmax(frames))
+    members = pcca.metastable_label_sets_[k]
     keep = [i for i, s in enumerate(short) if np.isin(s, members).any()]
     one = [short[i][np.isin(short[i], members)] for i in keep]
     with pytest.warns(UserWarning, match="no frames"):
         res = save_macrostate_samples(pcca, one, [trajs[i][:len(o)] for i, o in zip(keep, one)],
                                       weighting="assignment", n_samples=3,
                                       out_dir=str(tmp_path))
-    assert [f is None for f in res["files"]] == [True, False, True]
+    assert [f is None for f in res["files"]] == [j != k for j in range(3)]
+    # no frames at all
+    with pytest.warns(UserWarning, match="no frames"):
+        res = save_macrostate_samples(pcca, [], [], out_dir=str(tmp_path))
+    assert res["files"] == [None, None, None] and len(res["index"]) == 0
 
 
 def test_alanine_dipeptide_macrostates(tmp_path):

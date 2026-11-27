@@ -146,6 +146,8 @@ class PCCA(MarkovStateModel):
         labels that are not in the model)."""
         from ..utils import list_of_1d
         out = []
+        if isinstance(sequences, (list, tuple)) and len(sequences) == 0:
+            return out
         keys = list(self.mapping_)
         int_keys = all(isinstance(k, (int, np.integer)) and k >= 0 for k in keys)
         if int_keys:
@@ -200,6 +202,8 @@ class PCCA(MarkovStateModel):
             raise ValueError('n_samples must be at least 1')
         rs = check_random_state(random_state)
         idx = self._internal_sequences(sequences)
+        if not idx or sum(len(s) for s in idx) == 0:
+            return [np.zeros((0, 2), dtype=np.int64) for _ in range(self.n_macrostates)]
         traj = np.concatenate([np.full(len(s), i, dtype=np.int64) for i, s in enumerate(idx)])
         frame = np.concatenate([np.arange(len(s), dtype=np.int64) for s in idx])
         state = np.concatenate(idx) if idx else np.zeros(0, dtype=np.int64)

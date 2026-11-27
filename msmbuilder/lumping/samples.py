@@ -71,6 +71,8 @@ def save_macrostate_samples(lumper, sequences, trajectories, n_samples=100, top=
     """
     if not hasattr(lumper, 'draw_macrostate_samples'):
         raise TypeError('save_macrostate_samples needs a fitted PCCA or PCCAPlus model')
+    sequences = list(sequences)
+    trajectories = list(trajectories)
     if len(sequences) != len(trajectories):
         raise ValueError('sequences and trajectories must have the same length '
                          '(%d and %d)' % (len(sequences), len(trajectories)))
