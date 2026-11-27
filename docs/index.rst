@@ -21,7 +21,7 @@ MSMBuilder Neo
 
 .. code-block:: bash
 
-   pip install git+https://github.com/sbhakat/msmbuilder-neo.git
+   pip install msmbuilder-neo
    msmb Pipeline --template > pipeline.yaml    # describe your analysis
    msmb Pipeline pipeline.yaml                 # run it, with provenance
 
