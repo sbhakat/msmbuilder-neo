@@ -102,7 +102,7 @@ class ImpliedTimescales(Command):
         cols = ['Timescale %d' % (d+1) for d in range(len(lines[0]))]
         df = pd.DataFrame(data=lines, columns=cols)
         df['Lag Time'] = self.args.lag_times
-        df = df.reindex_axis(sorted(df.columns), axis=1)
+        df = df[sorted(df.columns)]   # (DataFrame.reindex_axis was removed from pandas)
         self.write_output(df)
 
     def write_output(self, df):

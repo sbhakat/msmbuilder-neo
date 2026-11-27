@@ -6,7 +6,9 @@ which is itself based on msmbuilder 3.8.0. It keeps the MSMBuilder API
 (`import msmbuilder`) while updating the build so the package installs on
 current Python and NumPy.
 
-> **Status:** early development (Phase 1 of the roadmap: packaging). APIs may change.
+> **Status:** pre-release. Packaging, code health, native-code removal and new methods
+> (roadmap phases 0–4) are done; data storage and the pipeline runner (phase 5) are in
+> progress. APIs may change before 1.0.
 
 Installation
 ------------
@@ -26,6 +28,14 @@ MDAnalysis, `msmbuilder-neo[torch]` enables the deep-learning estimators
 `msmbuilder-neo[deeptime]` adds deeptime's TRAM, OOM-reweighted MSMs and
 Chapman-Kolmogorov test, `msmbuilder-neo[dask]` loads datasets lazily, and
 `msmbuilder-neo[parquet]` stores project metadata as Parquet.
+
+A whole analysis can be run, and rerun reproducibly, from one YAML file:
+
+```bash
+msmb Pipeline --template > pipeline.yaml   # edit the data paths and steps
+msmb Pipeline pipeline.yaml                # writes results and provenance.yaml
+msmb Pipeline --verify pipeline.yaml       # rerun from scratch and compare
+```
 
 MSMBuilder Neo is pure Python: no compiler is needed to install it. The
 numerical kernels are compiled on first use by [Numba](https://numba.pydata.org)
