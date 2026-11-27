@@ -3,6 +3,36 @@
 Changelog
 =========
 
+MSMBuilder Neo 1.0.0
+--------------------
+
+The first release of MSMBuilder Neo, the modernized fork of msmbuilder2022
+(itself based on MSMBuilder 3.8). Highlights, described in :ref:`whats_new`;
+changes that affect existing code are listed in the :ref:`migration`.
+
+- Installs with ``pip install msmbuilder-neo`` on Python 3.10-3.13, NumPy 2,
+  Linux (x86_64, aarch64) and macOS (Apple Silicon, Intel). Pure Python: all
+  compiled code was replaced by Numba kernels, checked against the original
+  results.
+- VAMP and VAMP scores for model selection, alongside GMRQ.
+- Deep collective variables (optional PyTorch): VAMPnets, state-free
+  reversible VAMPnets, time-lagged autoencoders, DeepTICA, DeepLDA, with
+  TorchScript export for PLUMED.
+- deeptime adapters (optional): TRAM, OOM-reweighted MSMs,
+  Chapman-Kolmogorov tests, conversion to and from deeptime models.
+- PyEMMA-style PCCA+ macrostates and macrostate structures written as PDB
+  files.
+- MDAnalysis trajectories, h5py datasets (PyTables files still open), lazy
+  Dask loading, Parquet/CSV project metadata.
+- ``msmb Pipeline``: whole analyses from one YAML file with recorded
+  provenance and ``--verify``.
+- Bug fixes in HMM start probabilities, Bayesian MSM sampling, ``msmb``
+  commands with word-valued defaults, cloning of featurizers, ``dir()`` on
+  unfitted estimators, and others listed in the migration guide.
+- New documentation with executed example notebooks.
+
+The entries below are from MSMBuilder and msmbuilder2022.
+
 v3.9-dev
 --------
 

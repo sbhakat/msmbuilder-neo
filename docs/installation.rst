@@ -10,18 +10,20 @@ they are used (a few seconds, once; the result is cached).
 
 .. code-block:: bash
 
-    pip install git+https://github.com/sbhakat/msmbuilder-neo.git
+    pip install msmbuilder-neo
 
-A release on PyPI (``pip install msmbuilder-neo``) and conda-forge will
-follow version 1.0. The package is imported as ``msmbuilder`` and provides
-the ``msmb`` command, like the original MSMBuilder, so the two should not be
-installed in the same environment.
+The package is imported as ``msmbuilder`` and provides the ``msmb`` command,
+like the original MSMBuilder, so the two should not be installed in the same
+environment. To try the latest development version instead:
+
+.. code-block:: bash
+
+    pip install git+https://github.com/sbhakat/msmbuilder-neo.git
 
 Optional features
 -----------------
 
-Install extras with ``pip install "msmbuilder-neo[torch,deeptime] @ git+https://github.com/sbhakat/msmbuilder-neo.git"``
-(or ``pip install ".[torch,deeptime]"`` from a clone):
+Install extras with ``pip install "msmbuilder-neo[torch,deeptime]"``:
 
 .. list-table::
    :header-rows: 1
