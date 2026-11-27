@@ -40,4 +40,5 @@ from .fit_transform import (tICACommand, ButterworthCommand, DoubleEWMACommand,
 from .transform import TransformCommand
 from .example_datasets import (FsPeptideDatasetCommand)
 from .implied_timescales import ImpliedTimescales
+from .pipeline import Pipeline
 from .template_project import TemplateProjectCommand
