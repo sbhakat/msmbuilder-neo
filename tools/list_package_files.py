@@ -17,4 +17,6 @@ for dirpath, dirnames, filenames in os.walk(os.path.join(root, "msmbuilder")):
     for name in sorted(filenames):
         if name in SKIP_NAMES or name.endswith(SKIP_SUFFIXES):
             continue
-        print(os.path.relpath(os.path.join(dirpath, name), root))
+        # meson.build splits these paths on "/" to find each file's install
+        # directory, so print them with forward slashes on Windows too
+        print(os.path.relpath(os.path.join(dirpath, name), root).replace(os.sep, "/"))
